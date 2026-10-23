@@ -1,11 +1,12 @@
-# Pushing a tag like v0.2.0 builds the mod, creates the GitHub release with the jar and uploads it to Modrinth.
+# Publishing a GitHub release (e.g. gh release create v0.2.0) builds the mod, attaches the jar to the release
+# and uploads it to Modrinth.
 # Needs the repository secret MODRINTH_TOKEN and the repository variable MODRINTH_ID (the Modrinth project id).
 # The tag should match mod_version in gradle.properties.
 name: Publish
 
 on:
-  push:
-    tags: ["v*"]
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -28,14 +29,14 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: build/libs/*.jar
-          generate_release_notes: true
 
       - uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           files: build/libs/*.jar
-          name: ${{ github.ref_name }}
+          name: ${{ github.event.release.name }}
+          changelog: ${{ github.event.release.body }}
           loaders: fabric
           game-versions: "26.2"
           version-type: release
