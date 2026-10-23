@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "sackoverlay",
+  "version": "${version}",
+  "name": "Sack Overlay",
+  "description": "A clean overview of your Hypixel SkyBlock sacks. Client-side only.",
+  "authors": ["nbardavid"],
+  "contact": {
+    "homepage": "https://github.com/nbardavid/sack-overlay",
+    "sources": "https://github.com/nbardavid/sack-overlay",
+    "issues": "https://github.com/nbardavid/sack-overlay/issues"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      { "value": "io.github.sackoverlay.SackOverlay", "adapter": "kotlin" }
+    ],
+    "modmenu": [
+      "io.github.sackoverlay.SackModMenu"
+    ]
+  },
+  "mixins": ["sackoverlay.mixins.json"],
+  "accessWidener": "sackoverlay.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "~${minecraft}",
+    "fabric-api": "*",
+    "fabric-language-kotlin": ">=${fabric_kotlin}",
+    "skyblock-api": ">=${sbapi}",
+    "yet_another_config_lib_v3": ">=${yacl}"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

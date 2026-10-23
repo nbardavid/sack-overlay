@@ -1,0 +1,41 @@
+# Publishing a GitHub release builds the mod, attaches the jar to the release and uploads it to Modrinth.
+# Needs the repository secret MODRINTH_TOKEN and the repository variable MODRINTH_ID (the Modrinth project id).
+# The release tag should match mod_version in gradle.properties (e.g. v0.2.0).
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: chmod +x gradlew && ./gradlew build
+
+      - uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ${{ vars.MODRINTH_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          files: build/libs/!(*-sources).jar
+          loaders: fabric
+          game-versions: "26.2"
+          version-type: release
+          dependencies: |
+            fabric-api(required){modrinth:fabric-api}
+            fabric-language-kotlin(required){modrinth:fabric-language-kotlin}
+            yet_another_config_lib_v3(required){modrinth:yacl}
+            modmenu(optional){modrinth:modmenu}

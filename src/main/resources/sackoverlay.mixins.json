@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "io.github.sackoverlay.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "AbstractContainerScreenAccessor",
+    "GameRendererMixin",
+    "GuiItemAtlasMixin",
+    "GuiRendererMixin",
+    "GuiSetScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
