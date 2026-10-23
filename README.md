@@ -1,22 +1,31 @@
 # Sack Overlay
 
-A Fabric mod for Hypixel SkyBlock that replaces the Sack of Sacks menu with a clean overview of all your sacks.
+A client-side Fabric mod for Hypixel SkyBlock (Minecraft 26.2) that replaces the Sack of Sacks menu with a clean overview of all your sacks.
 
 ## Features
-- Every sack on one screen, with search
-- Withdraw items with a click
-- Light, dark and transparent themes
-- Works alongside Skyblocker, SkyOcean and other SkyBlock mods
+- One page per sack, with your inventory in its usual place
+- Click an item to withdraw it with `/gfs`
+- Search, page reordering, light / dark / transparent themes
+- Works alongside other SkyBlock mods
 
-Client-side only. The mod only sends the same withdraw command you could type yourself.
+## Data
+- Sack amounts come from [SkyblockAPI](https://github.com/SkyblockAPI/SkyblockAPI), which reads the `[Sacks]` chat messages and the sack menus.
+- The list of items in each sack comes from [meowdding-repo](https://github.com/meowdding/meowdding-repo) (MIT).
+- Sack of Sacks slots and capacities are read from the menus you open.
+- No extra network requests. The only command the mod sends is `/gfs`, when you click an item.
+
+## Commands
+- `/sackoverlay`: open the overview outside the menu
+- `/sackoverlay search <text>`: open `/sacks` with a search already typed
+- `/sackoverlay config`: open the settings (also available through Mod Menu or the gear button)
+
+Keybinds for opening your sacks and searching the hovered item can be set in Controls.
 
 ## Requirements
-- Minecraft 26.2
-- Fabric API, Fabric Language Kotlin and YetAnotherConfigLib
+- Fabric API
+- Fabric Language Kotlin
+- YetAnotherConfigLib
 - Mod Menu (optional)
-
-## Usage
-Open `/sacks`. Settings are under the gear button, in Mod Menu, or with `/sackoverlay config`.
 
 ## Building
 ```
