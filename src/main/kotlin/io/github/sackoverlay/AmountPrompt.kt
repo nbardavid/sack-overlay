@@ -1,11 +1,11 @@
 package io.github.sackoverlay
 
-import io.github.sackoverlay.SackPageView.Companion.SHADOW
-import io.github.sackoverlay.SackPageView.Companion.TEXT
-import io.github.sackoverlay.SackPageView.Companion.card
-import io.github.sackoverlay.SackPageView.Companion.panel
-import io.github.sackoverlay.SackPageView.Companion.slot
-import io.github.sackoverlay.SackPageView.Companion.tr
+import io.github.sackoverlay.Gui.SHADOW
+import io.github.sackoverlay.Gui.TEXT
+import io.github.sackoverlay.Gui.card
+import io.github.sackoverlay.Gui.panel
+import io.github.sackoverlay.Gui.slot
+import io.github.sackoverlay.Gui.tr
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.network.chat.Component

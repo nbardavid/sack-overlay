@@ -1,21 +1,21 @@
 package io.github.sackoverlay
 
-import io.github.sackoverlay.SackPageView.Companion.EMPTY
-import io.github.sackoverlay.SackPageView.Companion.GAP
-import io.github.sackoverlay.SackPageView.Companion.HEADER_H
-import io.github.sackoverlay.SackPageView.Companion.INNER
-import io.github.sackoverlay.SackPageView.Companion.LOGICAL_W
-import io.github.sackoverlay.SackPageView.Companion.MUTED
-import io.github.sackoverlay.SackPageView.Companion.PAD
-import io.github.sackoverlay.SackPageView.Companion.SEARCH_W
-import io.github.sackoverlay.SackPageView.Companion.SHADOW
-import io.github.sackoverlay.SackPageView.Companion.SLOT
-import io.github.sackoverlay.SackPageView.Companion.TEXT
-import io.github.sackoverlay.SackPageView.Companion.border
-import io.github.sackoverlay.SackPageView.Companion.panel
-import io.github.sackoverlay.SackPageView.Companion.slot
-import io.github.sackoverlay.SackPageView.Companion.tr
-import io.github.sackoverlay.SackPageView.Companion.widthFor
+import io.github.sackoverlay.Gui.EMPTY
+import io.github.sackoverlay.Gui.GAP
+import io.github.sackoverlay.Gui.HEADER_H
+import io.github.sackoverlay.Gui.INNER
+import io.github.sackoverlay.Gui.LOGICAL_W
+import io.github.sackoverlay.Gui.MUTED
+import io.github.sackoverlay.Gui.PAD
+import io.github.sackoverlay.Gui.SEARCH_W
+import io.github.sackoverlay.Gui.SHADOW
+import io.github.sackoverlay.Gui.SLOT
+import io.github.sackoverlay.Gui.TEXT
+import io.github.sackoverlay.Gui.border
+import io.github.sackoverlay.Gui.panel
+import io.github.sackoverlay.Gui.slot
+import io.github.sackoverlay.Gui.tr
+import io.github.sackoverlay.Gui.widthFor
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.components.EditBox
 import net.minecraft.client.gui.screens.Screen
@@ -38,7 +38,7 @@ class SackOverlayScreen : Screen(Component.translatable("sackoverlay.ui.title"))
     private lateinit var prompt: AmountPrompt
     private val stripHits = mutableListOf<Pair<IntArray, String>>()
 
-    private val panelW get() = widthFor(SackPageView.columnsFor(width - 16))
+    private val panelW get() = widthFor(Gui.columnsFor(width - 16))
     private val panelX get() = (width - panelW) / 2
     private val panelY get() = 8
     private val stripH get() = HEADER_H + ((SackStore.sackSlots.size.coerceAtLeast(1) + 8) / 9) * SLOT + INNER

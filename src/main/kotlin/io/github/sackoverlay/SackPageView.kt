@@ -1,23 +1,34 @@
 package io.github.sackoverlay
 
-import net.minecraft.ChatFormatting
+import io.github.sackoverlay.Gui.GAP
+import io.github.sackoverlay.Gui.HEADER_H
+import io.github.sackoverlay.Gui.INNER
+import io.github.sackoverlay.Gui.LOGICAL_W
+import io.github.sackoverlay.Gui.MUTED
+import io.github.sackoverlay.Gui.PAD
+import io.github.sackoverlay.Gui.SCROLLBAR
+import io.github.sackoverlay.Gui.SEARCH_W
+import io.github.sackoverlay.Gui.SELECTED
+import io.github.sackoverlay.Gui.SHADOW
+import io.github.sackoverlay.Gui.SLOT
+import io.github.sackoverlay.Gui.SLOT_BG
+import io.github.sackoverlay.Gui.TEXT
+import io.github.sackoverlay.Gui.border
+import io.github.sackoverlay.Gui.card
+import io.github.sackoverlay.Gui.panel
+import io.github.sackoverlay.Gui.slot
+import io.github.sackoverlay.Gui.tr
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphicsExtractor
-import net.minecraft.client.gui.screens.Screen
-import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner
 import net.minecraft.client.renderer.RenderPipelines
 import net.minecraft.network.chat.Component
-import net.minecraft.network.chat.MutableComponent
 import net.minecraft.resources.Identifier
 import net.minecraft.world.item.ItemStack
 import tech.thatgravyboat.skyblockapi.api.profile.items.sacks.SacksAPI
 import tech.thatgravyboat.skyblockapi.helpers.McClient
 import tech.thatgravyboat.skyblockapi.platform.drawString
-import tech.thatgravyboat.skyblockapi.platform.showTooltip
 import tech.thatgravyboat.skyblockapi.utils.extentions.scaled
 import tech.thatgravyboat.skyblockapi.utils.extentions.translated
-import tech.thatgravyboat.skyblockapi.utils.text.Text
-import java.util.Locale
 
 /**
  * The sack pages panel, shared by the screen that replaces the Sack of Sacks and by /sackoverlay.
@@ -36,7 +47,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
     private val hits = mutableListOf<Hit>()
     private var hovered: Hovered? = null
     private val pageTops = mutableMapOf<String, Int>()
-    private var lastCommand = 0L
+    private val withdrawals = WithdrawQueue()
 
     /** A page grabbed by its title. It only starts moving once the mouse has travelled a few pixels. */
     private class Drag(val family: String, val startX: Int, val startY: Int, val grabX: Int, val grabY: Int) {
@@ -116,48 +127,8 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         return true
     }
 
-    /**
-     * Withdrawal asked by the player: exactly the /gfs command they would type themselves.
-     * Hypixel handles commands slower than menu clicks, so one /gfs goes out per [withdrawDelay]. Clicks in between
-     * are not lost: they add up and leave as a single command when the delay is over (see [flushQueued]).
-     * Hypixel only moves what fits in the inventory, so no space check is needed before sending.
-     */
-    fun withdraw(itemId: String, requested: Int) {
-        val queued = queuedWithdraw?.takeIf { it.first == itemId }?.second ?: 0
-        val amount = minOf(queued + requested, SackStore.count(itemId))
-        if (amount <= 0) return
-        queuedWithdraw = itemId to amount
-        flushQueued()
-    }
-
-    // Withdrawal waiting for the delay to end, and the item of the last command sent (for the slot fill)
-    private var queuedWithdraw: Pair<String, Int>? = null
-    private var lastItem: String? = null
-    private val withdrawDelay get() = SackConfig.get.withdrawDelayMs.toLong()
-
-    /** Sends the queued withdrawal once the delay since the last command is over. Called on click and every frame. */
-    private fun flushQueued() {
-        val (itemId, amount) = queuedWithdraw ?: return
-        val now = System.currentTimeMillis()
-        if (now - lastCommand < withdrawDelay) return
-        queuedWithdraw = null
-        lastCommand = now
-        lastItem = itemId
-        McClient.sendCommand("gfs $itemId $amount")
-        // The display estimate is capped by the free space, since that is all Hypixel will move
-        SackStore.onWithdrawRequested(itemId, minOf(amount, SackStore.inventoryRoom(itemId)))
-    }
-
-    /**
-     * How full the slot of this item is drawn, from 0 to 1, while it waits for the delay (queued) or just sent a
-     * command (cooling down); null when nothing is pending for it.
-     */
-    private fun waitFill(itemId: String): Float? {
-        if (itemId != queuedWithdraw?.first && itemId != lastItem) return null
-        val elapsed = System.currentTimeMillis() - lastCommand
-        if (elapsed >= withdrawDelay) return if (itemId == queuedWithdraw?.first) 1f else null
-        return elapsed.toFloat() / withdrawDelay
-    }
+    /** Withdraws through /gfs, at most one command per configured delay (see [WithdrawQueue]). */
+    fun withdraw(itemId: String, requested: Int) = withdrawals.add(itemId, requested)
 
     /** Left click: everything owned, Hypixel fills the inventory (or a fixed amount if configured). Right click: one stack. */
     private fun requestedAmount(button: Int, owned: Int): Int {
@@ -202,8 +173,8 @@ class SackPageView(private val font: Font, private val query: () -> String) {
     fun render(graphics: GuiGraphicsExtractor, x: Int, y: Int, w: Int, h: Int, mouseX: Int, mouseY: Int) {
         hits.clear()
         hovered = null
-        columns = columnsFor(w)
-        flushQueued()
+        columns = Gui.columnsFor(w)
+        withdrawals.flush()
 
         panel(graphics, x, y, w, h)
         graphics.drawString(tr("title"), x + PAD, y + 6, TEXT, SHADOW)
@@ -218,52 +189,10 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         renderPages(graphics, mouseX, mouseY, x + PAD, y + BAR_H, x + w - PAD, y + h - PAD)
     }
 
-    /**
-     * A real item tooltip, built by the game from the item itself so other mods (prices...) add their lines,
-     * like in Hypixel's sack menu. The "Stored:" line is replaced by the live amount.
-     */
+    /** Tooltip of the hovered item, if any (see [SackTooltip]). */
     fun renderTooltip(graphics: GuiGraphicsExtractor) {
         val (id, stack, family) = hovered ?: return
-        val menuStack = SackStore.menuStack(id)
-        val lines = Screen.getTooltipFromItem(McClient.self, menuStack ?: stack).toMutableList()
-
-        val owned = SackStore.count(id)
-        val cap = SackStore.familyCapacity(family)
-        val stored = Component.literal("Stored: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format(Locale.US, "%,d", owned)).withStyle(ChatFormatting.YELLOW))
-            .append(Component.literal(cap?.let { "/" + capacityLabel(it) } ?: "").withStyle(ChatFormatting.GRAY))
-
-        val storedIndex = lines.indexOfFirst { it.string.contains("Stored:") }
-        if (storedIndex >= 0) {
-            // Item seen in the sack menu: its lore already has Hypixel's lines, only the amount is refreshed
-            lines[storedIndex] = stored
-        } else {
-            // Item from the repo: rebuild the sack part of Hypixel's tooltip under the name
-            val familyName = Component.literal(titleOf(family, 1).string + " Sack").withStyle(ChatFormatting.DARK_GRAY)
-            lines.addAll(1, listOf(familyName, Component.empty(), stored, Component.empty()) + clickHints())
-        }
-        if (owned > 0) {
-            val pickup = lines.indexOfFirst { it.string.contains("Click to pickup") }
-            lines.add(if (pickup >= 0) pickup + 1 else lines.size, tr("hint.shift").withStyle(ChatFormatting.YELLOW))
-        }
-
-        val (mx, my) = McClient.mouse
-        graphics.setTooltipForNextFrame(font, lines.map { it.visualOrderText }, DefaultTooltipPositioner.INSTANCE, mx.toInt(), my.toInt(), false)
-    }
-
-    /** Hypixel's wording for what each click does, following the settings. */
-    private fun clickHints(): List<Component> {
-        val config = SackConfig.get
-        val right = if (config.rightClickStack == 64) tr("hint.right_stack") else Component.translatable("sackoverlay.ui.hint.right_amount", config.rightClickStack)
-        val left = if (config.leftClickFillsInventory) tr("hint.left_pickup") else Component.translatable("sackoverlay.ui.hint.left_amount", config.leftClickAmount)
-        return listOf(right.withStyle(ChatFormatting.AQUA), left.withStyle(ChatFormatting.YELLOW))
-    }
-
-    /** Capacity the way Hypixel writes it: 640, 6.7k, 20.2k, 2.6M. */
-    private fun capacityLabel(n: Int): String = when {
-        n >= 1_000_000 -> String.format(Locale.ROOT, "%.1fM", n / 1e6).replace(".0M", "M")
-        n >= 1_000 -> String.format(Locale.ROOT, "%.1fk", n / 1e3).replace(".0k", "k")
-        else -> n.toString()
+        SackTooltip.render(graphics, font, id, stack, family)
     }
 
     // ---------- Data ----------
@@ -285,17 +214,12 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             val all = data.layouts[family] ?: families[family].orEmpty()
             val items = if (hypixelMode) all else all.filter { SackStore.count(it) > 0 && it !in shown }
             shown += items
-            if (items.isEmpty()) null else Page(family, titleOf(family, owned.count { it == family }), items)
+            if (items.isEmpty()) null else Page(family, Gui.familyTitle(family, owned.count { it == family }), items)
         }
         // Sack items that no displayed page lists
         val others = SacksAPI.sackItems.filter { (id, n) -> n > 0 && id !in shown }.keys.sorted()
         val all = if (others.isEmpty()) pages else pages + Page("OTHER", tr("others"), others)
         return all.sortedBy { custom.indexOf(it.family).let { i -> if (i < 0) Int.MAX_VALUE else i } }
-    }
-
-    private fun titleOf(family: String, count: Int): Component {
-        val name = family.removeSuffix("_SACK").split('_').joinToString(" ") { it.lowercase().replaceFirstChar(Char::titlecase) }
-        return Text.of(if (count > 1) "$name ×$count" else name)
     }
 
     private fun matches(itemId: String): Boolean {
@@ -452,7 +376,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             if (page.family == selected) border(graphics, 0, 0, LOGICAL_W, h, SELECTED)
             graphics.drawString(page.title, INNER + 1, 3, TEXT, SHADOW)
             // Right side: how much each slot can hold with the equipped sacks
-            val right = if (folded) "▸" else cap?.let { "max ${shortAmount(it)}" } ?: ""
+            val right = if (folded) "▸" else cap?.let { "max ${Amounts.short(it)}" } ?: ""
             graphics.drawString(right, LOGICAL_W - INNER - font.width(right), 3, MUTED, SHADOW)
         }
         if (folded) return
@@ -478,7 +402,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             if (drawContent) slotContent(graphics, id, stack, sx, sy, cap)
             // Withdrawal waiting or just sent: the slot fills from the bottom until the next /gfs can go out
             if (pass != Pass.STATIC) {
-                waitFill(id)?.let { fraction ->
+                withdrawals.fill(id)?.let { fraction ->
                     val fillH = ((SLOT - 2) * fraction).toInt()
                     graphics.fill(sx + 1, sy + SLOT - 1 - fillH, sx + SLOT - 1, sy + SLOT - 1, WAIT_OVERLAY)
                 }
@@ -496,14 +420,14 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         val amount = SackStore.count(id)
         if (amount == 0) {
             // Accepted but not owned: greyed out, no amount
-            graphics.fill(sx + 1, sy + 1, sx + SLOT - 1, sy + SLOT - 1, ZERO_OVERLAY)
+            graphics.fill(sx + 1, sy + 1, sx + SLOT - 1, sy + SLOT - 1, Gui.ZERO_OVERLAY)
         } else {
             // Full slot: red veil over the item, nothing for slots that still have room
             if (cap != null && amount >= cap) {
                 graphics.fill(sx + 1, sy + 1, sx + SLOT - 1, sy + SLOT - 1, FULL_OVERLAY)
             }
             // Small amount (3/4 size) in the bottom right corner, like the vanilla stack count
-            val label = countLabel(amount)
+            val label = Amounts.label(amount)
             graphics.translated(sx + SLOT - 1, sy + SLOT - 7) {
                 graphics.scaled(COUNT_SCALE, COUNT_SCALE) {
                     graphics.drawString(label, -font.width(label), 0, COUNT, true)
@@ -512,7 +436,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         }
         // Dim mode: items that don't match the search are covered, the others stay as they are
         if (dimming && !matches(id)) {
-            graphics.fill(sx + 1, sy + 1, sx + SLOT - 1, sy + SLOT - 1, DIM_OVERLAY)
+            graphics.fill(sx + 1, sy + 1, sx + SLOT - 1, sy + SLOT - 1, Gui.DIM_OVERLAY)
         }
     }
 
@@ -525,50 +449,12 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         graphics.fill(x, thumbY, x + SCROLLBAR, thumbY + thumbH, MUTED)
     }
 
-    // Amount labels are drawn for every slot every frame: format each amount once
-    private val labelCache = HashMap<Int, String>()
-
-    private fun countLabel(n: Int): String {
-        if (labelCache.size > LABEL_CACHE_MAX) labelCache.clear()
-        return labelCache.getOrPut(n) { shortAmount(n) }
-    }
-
-    // At most 3 characters besides the dot: 999, 2.2k, 143k, 1.2M, 12M.
-    // Locale.ROOT keeps a dot as decimal separator whatever the system language.
-    private fun shortAmount(n: Int): String = when {
-        n >= 10_000_000 -> "${n / 1_000_000}M"
-        n >= 1_000_000 -> String.format(Locale.ROOT, "%.1fM", n / 1e6).replace(".0M", "M")
-        n >= 10_000 -> "${n / 1000}k"
-        n >= 1_000 -> String.format(Locale.ROOT, "%.1fk", n / 1e3).replace(".0k", "k")
-        else -> n.toString()
-    }
-
     companion object {
-        const val SLOT = 18
-        const val INNER = 4
-        const val HEADER_H = 13
-        const val LOGICAL_W = 9 * SLOT + 2 * INNER
-        const val PAD = 6
-        const val GAP = 6
         const val BAR_H = 20
-        const val SCROLLBAR = 4
-        const val SEARCH_W = 120
         const val WAIT_OVERLAY = 0x80FFFFFF.toInt()
         const val COUNT_SCALE = 0.75f
         const val DRAG_THRESHOLD = 4
-        const val LABEL_CACHE_MAX = 4096
         const val EDGE_SCROLL = 16
-
-        // Colors of the current theme (see Theme)
-        val SLOT_BG get() = Theme.current.slotFill
-        val EMPTY get() = Theme.current.empty
-        val SELECTED get() = Theme.current.selected
-        val HOVER get() = Theme.current.hover
-        val ZERO_OVERLAY get() = Theme.current.zeroOverlay
-        val DIM_OVERLAY get() = Theme.current.dimOverlay
-        val TEXT get() = Theme.current.text
-        val MUTED get() = Theme.current.muted
-        val SHADOW get() = Theme.current.shadow
 
         // Same in every theme: amounts are white with a shadow, like vanilla stack counts
         const val COUNT = 0xFFFFFFFF.toInt()
@@ -584,68 +470,5 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         /** Search text to show when a screen opens: a /sackoverlay search query first, then the remembered one. */
         fun initialQuery(): String =
             pendingQuery?.also { pendingQuery = null } ?: if (SackConfig.get.rememberSearch) savedQuery else ""
-
-        fun tr(key: String): MutableComponent = Component.translatable("sackoverlay.ui.$key")
-
-        /** Panel width for this many page columns. */
-        fun widthFor(columns: Int) = 2 * PAD + columns * LOGICAL_W + (columns - 1) * GAP + GAP + SCROLLBAR
-
-        /** Number of columns that fit in this width, between 1 and the configured maximum. */
-        fun columnsFor(width: Int) =
-            ((width - widthFor(1)) / (LOGICAL_W + GAP) + 1).coerceIn(1, SackConfig.get.maxColumns.coerceIn(1, 4))
-
-        /** A main panel: framed window with a 2 px raised border. */
-        fun panel(graphics: GuiGraphicsExtractor, x: Int, y: Int, w: Int, h: Int) = frame(graphics, x, y, w, h, 2)
-
-        /** A page card: same frame with a 1 px border. */
-        fun card(graphics: GuiGraphicsExtractor, x: Int, y: Int, w: Int, h: Int) = frame(graphics, x, y, w, h, 1)
-
-        /**
-         * Vanilla-style frame: black outline with cut corners, then a [border] px raised edge
-         * (light on the top and left, shadow on the bottom and right) around the fill.
-         */
-        fun frame(graphics: GuiGraphicsExtractor, x: Int, y: Int, w: Int, h: Int, border: Int) {
-            val t = Theme.current
-            val r = x + w
-            val b = y + h
-            // Outline, one pixel in from each corner so the corners look cut
-            graphics.fill(x + 2, y, r - 2, y + 1, t.frameOuter)
-            graphics.fill(x + 2, b - 1, r - 2, b, t.frameOuter)
-            graphics.fill(x, y + 2, x + 1, b - 2, t.frameOuter)
-            graphics.fill(r - 1, y + 2, r, b - 2, t.frameOuter)
-            graphics.fill(x + 1, y + 1, x + 2, y + 2, t.frameOuter)
-            graphics.fill(r - 2, y + 1, r - 1, y + 2, t.frameOuter)
-            graphics.fill(x + 1, b - 2, x + 2, b - 1, t.frameOuter)
-            graphics.fill(r - 2, b - 2, r - 1, b - 1, t.frameOuter)
-            // Raised edge: light top and left, shadow bottom and right
-            graphics.fill(x + 2, y + 1, r - 1 - border, y + 1 + border, t.frameLight)
-            graphics.fill(x + 1, y + 2, x + 1 + border, b - 1 - border, t.frameLight)
-            graphics.fill(x + 1 + border, b - 1 - border, r - 2, b - 1, t.frameShadow)
-            graphics.fill(r - 1 - border, y + 1 + border, r - 1, b - 2, t.frameShadow)
-            // Corners where light meets shadow take the fill color, like vanilla
-            graphics.fill(r - 1 - border, y + 1, r - 2, y + 1 + border, t.fill)
-            graphics.fill(x + 1, b - 1 - border, x + 1 + border, b - 2, t.fill)
-            graphics.fill(x + 1 + border, y + 1 + border, r - 1 - border, b - 1 - border, t.fill)
-        }
-
-        /**
-         * Vanilla-style slot: dark top and left edge, light bottom and right edge.
-         * Five rectangles: the fill covers the whole slot (corners included), the edges go on top.
-         */
-        fun slot(graphics: GuiGraphicsExtractor, x: Int, y: Int) {
-            val t = Theme.current
-            graphics.fill(x, y, x + SLOT, y + SLOT, t.slotFill)
-            graphics.fill(x, y, x + SLOT - 1, y + 1, t.slotDark)
-            graphics.fill(x, y + 1, x + 1, y + SLOT - 1, t.slotDark)
-            graphics.fill(x + 1, y + SLOT - 1, x + SLOT, y + SLOT, t.slotLight)
-            graphics.fill(x + SLOT - 1, y + 1, x + SLOT, y + SLOT - 1, t.slotLight)
-        }
-
-        fun border(graphics: GuiGraphicsExtractor, x: Int, y: Int, w: Int, h: Int, color: Int) {
-            graphics.fill(x, y, x + w, y + 1, color)
-            graphics.fill(x, y + h - 1, x + w, y + h, color)
-            graphics.fill(x, y, x + 1, y + h, color)
-            graphics.fill(x + w - 1, y, x + w, y + h, color)
-        }
     }
 }

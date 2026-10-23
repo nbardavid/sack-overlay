@@ -1,7 +1,7 @@
 package io.github.sackoverlay
 
-import io.github.sackoverlay.SackPageView.Companion.card
-import io.github.sackoverlay.SackPageView.Companion.tr
+import io.github.sackoverlay.Gui.card
+import io.github.sackoverlay.Gui.tr
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.renderer.RenderPipelines
 import net.minecraft.network.chat.Component

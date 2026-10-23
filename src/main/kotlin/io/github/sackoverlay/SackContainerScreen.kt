@@ -1,18 +1,18 @@
 package io.github.sackoverlay
 
-import io.github.sackoverlay.SackPageView.Companion.GAP
-import io.github.sackoverlay.SackPageView.Companion.HEADER_H
-import io.github.sackoverlay.SackPageView.Companion.INNER
-import io.github.sackoverlay.SackPageView.Companion.LOGICAL_W
-import io.github.sackoverlay.SackPageView.Companion.PAD
-import io.github.sackoverlay.SackPageView.Companion.SEARCH_W
-import io.github.sackoverlay.SackPageView.Companion.SHADOW
-import io.github.sackoverlay.SackPageView.Companion.SLOT
-import io.github.sackoverlay.SackPageView.Companion.TEXT
-import io.github.sackoverlay.SackPageView.Companion.panel
-import io.github.sackoverlay.SackPageView.Companion.slot
-import io.github.sackoverlay.SackPageView.Companion.tr
-import io.github.sackoverlay.SackPageView.Companion.widthFor
+import io.github.sackoverlay.Gui.GAP
+import io.github.sackoverlay.Gui.HEADER_H
+import io.github.sackoverlay.Gui.INNER
+import io.github.sackoverlay.Gui.LOGICAL_W
+import io.github.sackoverlay.Gui.PAD
+import io.github.sackoverlay.Gui.SEARCH_W
+import io.github.sackoverlay.Gui.SHADOW
+import io.github.sackoverlay.Gui.SLOT
+import io.github.sackoverlay.Gui.TEXT
+import io.github.sackoverlay.Gui.panel
+import io.github.sackoverlay.Gui.slot
+import io.github.sackoverlay.Gui.tr
+import io.github.sackoverlay.Gui.widthFor
 import io.github.sackoverlay.mixin.AbstractContainerScreenAccessor
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -111,7 +111,7 @@ class SackContainerScreen(menu: ChestMenu, inventory: Inventory, title: Componen
         invX = (width - INV_W) / 2
         sackX = (invX - GAP - LOGICAL_W).coerceAtLeast(4)
 
-        pagesW = widthFor(SackPageView.columnsFor(width - 16))
+        pagesW = widthFor(Gui.columnsFor(width - 16))
         pagesX = (width - pagesW) / 2
         pagesY = topMargin()
         pagesH = panelsY - GAP - pagesY
