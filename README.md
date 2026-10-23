@@ -1,6 +1,10 @@
+<p align="center"><img src="docs/icon.png" width="128" alt="Sack Overlay icon"></p>
+
 # Sack Overlay
 
 A client-side Fabric mod for Hypixel SkyBlock (Minecraft 26.2) that replaces the Sack of Sacks menu with a clean overview of all your sacks.
+
+![Sack Overlay screen](docs/screenshot.png)
 
 ## Features
 - One page per sack, with your inventory in its usual place
