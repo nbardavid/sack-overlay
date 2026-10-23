@@ -1,25 +1,27 @@
 # Sack Overlay
 
-Client-side Fabric mod for Hypixel SkyBlock (Minecraft 26.2): a clean overview of your sacks.
+A Fabric mod for Hypixel SkyBlock that replaces the Sack of Sacks menu with a clean overview of all your sacks.
 
-## What it does
-- Replaces the `/sacks` screen with one page per sack family, the real Sack of Sacks slots, and your inventory where it usually is.
-- Click an item to withdraw it (`/gfs`, exactly as if you typed it). Amounts update right away.
-- Settings: the ⚙ button at the bottom right, Mod Menu's Config button, or `/sackoverlay config`.
+## Features
+- Every sack on one screen, with search
+- Withdraw items with a click
+- Light, dark and transparent themes
+- Works alongside Skyblocker, SkyOcean and other SkyBlock mods
 
-## Data
-- Amounts: `SacksAPI.sackItems` from [SkyblockAPI](https://github.com/SkyblockAPI/SkyblockAPI), the same source as SkyOcean, kept up to date by the `[Sacks]` chat messages and the sack menus.
-- Which item goes in which sack: `sacks.json` from SkyOcean's [meowdding-repo](https://github.com/meowdding/meowdding-repo) (MIT).
-- Sack of Sacks layout and capacities: read from the menus you open.
-- No extra network requests. The only thing ever sent is `/gfs`, on click.
+Client-side only. The mod only sends the same withdraw command you could type yourself.
 
-## Build
-1. `gradlew.bat build` (Gradle downloads a JDK 25 if needed).
-2. Copy `build/libs/sack-overlay-0.1.0.jar` into `mods/`, with Fabric API, Fabric Language Kotlin and YetAnotherConfigLib.
+## Requirements
+- Minecraft 26.2
+- Fabric API, Fabric Language Kotlin and YetAnotherConfigLib
+- Mod Menu (optional)
 
-## Commands and keys
-- `/sackoverlay`: open the overview outside the menu.
-- `/sackoverlay search <text>`: open `/sacks` with a search already typed.
-- `/sackoverlay config`: open the settings.
-- Start typing to search (can be turned off). Arrow keys move between pages.
-- In Controls, under Sack Overlay: "Open sacks" and "Search hovered item" (unbound by default).
+## Usage
+Open `/sacks`. Settings are under the gear button, in Mod Menu, or with `/sackoverlay config`.
+
+## Building
+```
+./gradlew build
+```
+
+## License
+MIT
