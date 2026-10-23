@@ -57,7 +57,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 
 ## Releases
 - Repo: https://github.com/nbardavid/sack-overlay (development happens on this PC).
-- Bump `mod_version` in `gradle.properties`, push, then publish a GitHub release tagged `v<version>`: `.github/workflows/publish.yml` builds the jar and uploads it to the release and to Modrinth (secret `MODRINTH_TOKEN`, variable `MODRINTH_ID`).
+- Bump `mod_version` in `gradle.properties`, commit, then `git tag v<version>` and push the tag: `.github/workflows/publish.yml` builds the jar, creates the GitHub release and uploads it to Modrinth (secret `MODRINTH_TOKEN`, variable `MODRINTH_ID` = `YZojHzPT`). No `gh` CLI on this PC.
 
 ## Build
 - `./gradlew build` (on macOS run `chmod +x gradlew` first). The foojay plugin downloads JDK 25 if needed.
