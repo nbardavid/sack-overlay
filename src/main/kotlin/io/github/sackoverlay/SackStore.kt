@@ -53,6 +53,10 @@ object SackStore {
         var layouts: MutableMap<String, MutableList<String>> = mutableMapOf(),
         /** Page order chosen by dragging pages around; families not listed keep their default place after these. */
         var pageOrder: MutableList<String> = mutableListOf(),
+        /** Pages folded with a right click on their title. */
+        var folded: MutableSet<String> = mutableSetOf(),
+        /** Pages hidden with Shift + right click on their title; they come back from the settings. */
+        var hidden: MutableSet<String> = mutableSetOf(),
         // Saved before data was split per profile; moved into the first profile seen
         var sackSlots: MutableList<String?>? = null,
         var familyCapacity: MutableMap<String, FamilyCapacity>? = null,
@@ -65,6 +69,24 @@ object SackStore {
     }
 
     fun resetPageOrder() = setPageOrder(emptyList())
+
+    fun isFolded(family: String) = family in data.folded
+
+    fun setFolded(family: String, folded: Boolean) {
+        val changed = if (folded) data.folded.add(family) else data.folded.remove(family)
+        if (changed) save()
+    }
+
+    fun isHidden(family: String) = family in data.hidden
+
+    fun hide(family: String) {
+        if (data.hidden.add(family)) save()
+    }
+
+    fun showHiddenPages() {
+        data.hidden.clear()
+        save()
+    }
 
     private data class SackDef(val sack: String = "", val items: List<String> = emptyList())
 

@@ -59,6 +59,8 @@
   "sackoverlay.config.cachePages.desc": "Draw the pages once and reuse them while nothing changes, instead of rebuilding them every frame. Big FPS gain. Turn it off if a page looks out of date or broken.",
   "sackoverlay.config.resetPageOrder": "Reset page order",
   "sackoverlay.config.resetPageOrder.desc": "Drag a page by its title to move it. This puts every page back in the Sack of Sacks order.",
+  "sackoverlay.config.showHiddenPages": "Show hidden pages",
+  "sackoverlay.config.showHiddenPages.desc": "Shift + right click a page title to hide that page. Hidden pages still show up while searching. This button brings them all back.",
   "sackoverlay.config.instantUpdates": "Instant updates",
   "sackoverlay.config.instantUpdates.desc": "Update amounts as soon as you withdraw or insert items, instead of waiting for Hypixel's [Sacks] message.",
   "sackoverlay.config.leftClickFillsInventory": "Left click fills inventory",

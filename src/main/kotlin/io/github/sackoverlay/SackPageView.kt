@@ -40,7 +40,6 @@ class SackPageView(private val font: Font, private val query: () -> String) {
     private data class Hit(val x0: Int, val y0: Int, val x1: Int, val y1: Int, val action: () -> Unit)
     private data class Hovered(val id: String, val stack: ItemStack, val family: String)
 
-    private val collapsed = mutableSetOf<String>()
     private var scroll = if (SackConfig.get.rememberScroll) savedScroll else 0
     private var maxScroll = 0
     private var selected: String? = null
@@ -70,7 +69,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
     /** Scrolls to this family's page and highlights it. */
     fun select(family: String) {
         selected = family
-        collapsed -= family
+        SackStore.setFolded(family, false)
         pageTops[family]?.let { scroll = it.coerceIn(0, maxScroll) }
     }
 
@@ -108,11 +107,12 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             it.action()
             return true
         }
-        // A page title: left click opens the sack or starts a drag (decided on release), right click folds
+        // A page title: left click opens the sack or starts a drag (decided on release), right click folds,
+        // Shift + right click hides the page
         headerRects.firstOrNull { mx in it.x until it.x + it.w && my in it.y until it.y + it.h }?.let {
             when (button) {
                 0 -> drag = Drag(it.family, mx, my, mx - it.x, my - it.y)
-                1 -> if (!collapsed.remove(it.family)) collapsed += it.family
+                1 -> if (shift) SackStore.hide(it.family) else toggleFold(it.family)
             }
             return true
         }
@@ -126,6 +126,9 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         withdraw(id, requestedAmount(button, owned))
         return true
     }
+
+    /** Folds or unfolds a page; the state is saved, so it stays across screens and restarts. */
+    private fun toggleFold(family: String) = SackStore.setFolded(family, !SackStore.isFolded(family))
 
     /** Withdraws through /gfs, at most one command per configured delay (see [WithdrawQueue]). */
     fun withdraw(itemId: String, requested: Int) = withdrawals.add(itemId, requested)
@@ -155,7 +158,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         if (!current.active) {
             // No movement: a plain click on the title opens that sack, or folds the page when it can't
             if (onOpenPage?.invoke(current.family) != true) {
-                if (!collapsed.remove(current.family)) collapsed += current.family
+                toggleFold(current.family)
             }
             return true
         }
@@ -219,7 +222,10 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         // Sack items that no displayed page lists
         val others = SacksAPI.sackItems.filter { (id, n) -> n > 0 && id !in shown }.keys.sorted()
         val all = if (others.isEmpty()) pages else pages + Page("OTHER", tr("others"), others)
-        return all.sortedBy { custom.indexOf(it.family).let { i -> if (i < 0) Int.MAX_VALUE else i } }
+        // Hidden pages stay out, except while searching so their items can still be found
+        val searching = query().isNotBlank()
+        return all.filter { searching || !SackStore.isHidden(it.family) }
+            .sortedBy { custom.indexOf(it.family).let { i -> if (i < 0) Int.MAX_VALUE else i } }
     }
 
     private fun matches(itemId: String): Boolean {
@@ -268,7 +274,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         for (row in pages.chunked(columns)) {
             var rowH = 0
             row.forEachIndexed { col, (page, items) ->
-                val folded = page.family in collapsed && query().isBlank()
+                val folded = SackStore.isFolded(page.family) && query().isBlank()
                 val rows = if (folded) 0 else (items.size + 8) / 9
                 val h = HEADER_H + rows * SLOT + (if (rows > 0) INNER else 0)
                 rowH = maxOf(rowH, h)
@@ -320,7 +326,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         // The dragged page follows the mouse, above everything else
         if (current != null && dragged != null) {
             val (page, items) = dragged
-            val folded = page.family in collapsed && query().isBlank()
+            val folded = SackStore.isFolded(page.family) && query().isBlank()
             val rows = if (folded) 0 else (items.size + 8) / 9
             val h = HEADER_H + rows * SLOT + (if (rows > 0) INNER else 0)
             val ghost = Placement(page, items, rows, h, folded, mouseX - current.grabX, mouseY - current.grabY)

@@ -146,6 +146,13 @@ class SackConfig {
                                         .build(),
                                 )
                                 .option(
+                                    ButtonOption.createBuilder()
+                                        .name(t("showHiddenPages"))
+                                        .description(OptionDescription.of(t("showHiddenPages.desc")))
+                                        .action { _, _ -> SackStore.showHiddenPages() }
+                                        .build(),
+                                )
+                                .option(
                                     Option.createBuilder<Boolean>()
                                         .name(t("instantUpdates"))
                                         .description(OptionDescription.of(t("instantUpdates.desc")))
