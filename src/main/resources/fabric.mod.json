@@ -4,7 +4,7 @@
   "version": "${version}",
   "name": "Sack Overlay",
   "description": "A clean overview of your Hypixel SkyBlock sacks. Client-side only.",
-  "authors": ["nbardavid"],
+  "authors": ["lourio"],
   "contact": {
     "homepage": "https://github.com/nbardavid/sack-overlay",
     "sources": "https://github.com/nbardavid/sack-overlay",
