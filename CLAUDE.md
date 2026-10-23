@@ -60,6 +60,9 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 - Repo: https://github.com/nbardavid/sack-overlay (development happens on this PC).
 - Bump `mod_version` in `gradle.properties`, commit and push, then `gh release create v<version> --generate-notes`: `.github/workflows/publish.yml` builds the jar, attaches it to the release and uploads it to Modrinth (secret `MODRINTH_TOKEN`, variable `MODRINTH_ID` = `YZojHzPT`).
 
+- Modrinth project: https://modrinth.com/mod/sack-overlay-hypixel-skyblock (owner "lourio"), submitted for review on 2026-10-23. `modrinth.md` holds the page description.
+- TODO after approval: paste the Credits section of `modrinth.md` into the Modrinth description (SkyOcean first). Edits were refused during review because Modrinth's checker could not verify the GitHub links.
+
 ## Build
 - `./gradlew build` (on macOS run `chmod +x gradlew` first). The foojay plugin downloads JDK 25 if needed.
 - Versions live in `gradle.properties` (MC 26.2, Fabric Loom 1.18, Kotlin 2.4, SkyblockAPI 4.2.42 bundled with `include`, YACL 3.9.5).
