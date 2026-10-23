@@ -53,6 +53,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 
 ## Workflow on the user's Windows PC
 - After every build, copy `build/libs/sack-overlay-0.1.0.jar` into `D:\Jeux\ModrinthApp\profiles\SkyBlock Enhanced\mods` (replace the old one) — the user tests in that profile.
+- Replacing the jar while the game runs breaks it until restart: the next resource reload reads the new file with the old zip index ("invalid LOC header", missing textures and lang). Tell the user to restart the game after a copy made while it was open.
 - Hot reload dev client is configured (`gradlew runClient` with `../tools/jbr-25` + `../tools/hotswap-agent.jar`, DevAuth account "main"), but the user prefers testing in the real profile because the dev instance lacks their other mods.
 
 ## Releases

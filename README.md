@@ -36,5 +36,9 @@ Keybinds for opening your sacks and searching the hovered item can be set in Con
 ./gradlew build
 ```
 
+## Credits
+- The look of this screen is inspired by [Skyblock Enhanced Storage](https://modrinth.com/mod/skyblock-enhanced-storage) by Kd_Gaming1. Thanks for such a great storage overlay.
+- Thanks to the [SkyOcean](https://modrinth.com/mod/skyocean) team for [SkyblockAPI](https://github.com/SkyblockAPI/SkyblockAPI) and [meowdding-repo](https://github.com/meowdding/meowdding-repo).
+
 ## License
 MIT
