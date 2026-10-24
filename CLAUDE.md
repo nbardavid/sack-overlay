@@ -25,7 +25,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
   - Columns of sack pages (up to 4), vanilla 18 px slots, amounts at 3/4 scale in at most 3 characters.
   - Two display modes: HYPIXEL shows all items with zeros greyed out; COMPACT shows owned items only, without duplicates.
   - Pages can be dragged by their title to reorder them (live preview). The order is saved in `data.pageOrder` and can be reset from the settings.
-  - Right click on a title folds the page (saved in `data.folded`). Clicks never hide a page: pages are hidden from a "Hidden pages" group in the settings, one tick box per sack (`data.hidden`). Both are shared by all profiles. Hidden pages show up again while searching.
+  - A click on a title (left or right) folds the page (saved in `data.folded`); a left drag moves it. Clicks never hide a page: pages are hidden from a "Hidden pages" group in the settings, one tick box per sack (`data.hidden`). Both are shared by all profiles. Hidden pages show up again while searching.
   - Withdrawing: left click sends `/gfs` with the whole stock (Hypixel only moves what fits), right click sends a stack, Shift + click opens `AmountPrompt`. Full slots get a red overlay.
   - The tooltip is a real item tooltip (`Screen.getTooltipFromItem`), so price mods add their lines. It uses the stack seen in the sack menu when available, with its "Stored:" line replaced by the live amount; otherwise it rebuilds Hypixel's lines. Hover uses vanilla `container/slot_highlight_*` sprites.
 - Performance: `GlintThrottle` with `GuiItemAtlasMixin` and `GameRendererMixin` (same technique as Enhanced Storage 2.0, our own code). Animated (enchanted) items are only redrawn at the configured rate (30 FPS by default) while our screens are open. ImmediatelyFast's animated atlas stands aside meanwhile. Amount labels are cached and slots take 5 fills.
@@ -36,7 +36,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
   - It reports the real bounds through `leftPos`/`topPos` and `AbstractContainerScreenAccessor` (imageWidth/imageHeight are final in 26.2), so Skyblocker's Quick Nav tabs and RRV place themselves around it. It leaves top and bottom margins when those mods are loaded.
 - `SackOverlayScreen`: standalone, read-only view (`/sackoverlay`).
 - `SackConfig` (YACL, like Skyblocker) + `SackModMenu`: settings via the ⚙ button, Mod Menu, or `/sackoverlay config`.
-- Only the Sack of Sacks is replaced: the user wants each sack's own menu to stay vanilla. A version that replaced them with live slots inside the page was tried and removed. A left click on a page title clicks that sack's slot to open its vanilla menu, where clicks are instant and can be spammed; a right click folds the page.
+- Only the Sack of Sacks is replaced: the user wants each sack's own menu to stay vanilla. A version that replaced them with live slots inside the page was tried and removed. A click on a page title only folds the page. Never click a real Sack of Sacks slot from the panel: on Hypixel that takes the sack out of the Sack of Sacks (an earlier "open the sack from its title" feature did exactly that and was removed).
 - `/gfs` is slower than menu clicks: Hypixel handles commands with more latency. This cannot be fixed client-side; one left click (whole stock) avoids spamming. At most one `/gfs` goes out per `withdrawDelayMs` (500 ms by default). Clicks in between add up in `queuedWithdraw` and are flushed as one command; the slot shows a bottom-up white fill (`waitFill`) meanwhile. A queue still pending when the screen closes is dropped on purpose.
 - `Theme` (Transparent default / Light / Dark). Frames are drawn in code in the vanilla menu style that Enhanced Storage uses: a black outline with cut corners, a raised edge and bevelled slots. No Enhanced Storage assets are copied (they are GPL).
 - `ToolButtons`: one framed settings button with our own gear sprite (`textures/gui/sprites/gear.png`), placed right of the inventory and level with its top. The theme is chosen in the settings only. `/gfs` cooldown: 100 ms.
@@ -73,7 +73,6 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 - Pocket Sack-in-a-Sack upgrades are invisible in the sack id. The capacity is exact only after opening that sack's menu.
 - `/gfs` with ids such as `INK_SACK:3` is unverified.
 - Catharsis texture-pack overlays may still draw at vanilla positions.
-- Opening a sack from our panel shows Hypixel's vanilla sack menu (not replaced).
 
 ## Next ideas
 - Auto-update comes from Modrinth: the Modrinth App updates the mod once it is published there.

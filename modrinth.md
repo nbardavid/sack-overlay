@@ -4,12 +4,12 @@ Sack Overlay replaces Hypixel SkyBlock's Sack of Sacks menu (`/sacks`) with a si
 - **Every sack at a glance**: one page per sack, laid out in columns, with your inventory where it usually is.
 - **Click to withdraw**: left click fills your inventory, right click takes a stack, Shift + click lets you pick an amount.
 - **Search**: filter items by name, or dim the ones that don't match.
-- **Your layout**: drag pages by their title to reorder them, fold the ones you don't need.
+- **Your layout**: drag pages by their title to reorder them, click a title to fold the page, hide the sacks you don't need.
 - **Themes**: transparent, light or dark.
 - **Per profile**: each SkyBlock profile keeps its own sacks.
 - **Plays well with others**: leaves room for Skyblocker, RRV and other mods' buttons, and shows real item tooltips so price mods keep working.
 
-Each sack's own menu stays vanilla: click a page title to open it.
+Click a page title to fold it. Each sack's own menu stays vanilla.
 
 ## Safe to use
 The mod only reads what the game already shows you. It makes no extra requests to Hypixel or any other server. The only command it sends is `/gfs`, when you click an item, exactly as if you typed it.

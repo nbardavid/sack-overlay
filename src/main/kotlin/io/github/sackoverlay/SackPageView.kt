@@ -92,9 +92,6 @@ class SackPageView(private val font: Font, private val query: () -> String) {
     /** Set while a popup is open: no hover, no tooltip, no clicks on the pages. */
     var frozen = false
 
-    /** Called when a page title is clicked; returns true if it opened that sack (otherwise the page folds). */
-    var onOpenPage: ((String) -> Boolean)? = null
-
     /** Item the player shift-clicked and wants to type an amount for, with the click position. */
     var amountPrompt: Triple<String, Int, Int>? = null
 
@@ -104,7 +101,8 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             it.action()
             return true
         }
-        // A page title: left click opens the sack or starts a drag (decided on release), right click folds
+        // A page title: left click folds or starts a drag (decided on release), right click folds.
+        // It never touches the real Sack of Sacks slots: a click there takes the sack out of it.
         headerRects.firstOrNull { mx in it.x until it.x + it.w && my in it.y until it.y + it.h }?.let {
             when (button) {
                 0 -> drag = Drag(it.family, mx, my, mx - it.x, my - it.y)
@@ -152,10 +150,8 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         val current = drag ?: return false
         drag = null
         if (!current.active) {
-            // No movement: a plain click on the title opens that sack, or folds the page when it can't
-            if (onOpenPage?.invoke(current.family) != true) {
-                toggleFold(current.family)
-            }
+            // No movement: a plain click on the title folds the page
+            toggleFold(current.family)
             return true
         }
         // Save the order as displayed, keeping the place of pages hidden by the search

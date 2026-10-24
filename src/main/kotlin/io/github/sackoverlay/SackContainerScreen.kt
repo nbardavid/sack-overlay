@@ -28,8 +28,6 @@ import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.inventory.ChestMenu
 import net.minecraft.world.inventory.ContainerInput
 import net.minecraft.world.inventory.Slot
-import tech.thatgravyboat.skyblockapi.api.datatype.DataTypes
-import tech.thatgravyboat.skyblockapi.api.datatype.getData
 import tech.thatgravyboat.skyblockapi.helpers.McClient
 import tech.thatgravyboat.skyblockapi.helpers.McPlayer
 import tech.thatgravyboat.skyblockapi.platform.drawString
@@ -75,7 +73,6 @@ class SackContainerScreen(menu: ChestMenu, inventory: Inventory, title: Componen
         tools = ToolButtons { McClient.setScreenAsync { SackConfig.screen(null) } }
         placeWidgets()
         view = SackPageView(font) { search.value }
-        view.onOpenPage = ::openSack
         prompt = AmountPrompt(font, view)
     }
 
@@ -86,17 +83,6 @@ class SackContainerScreen(menu: ChestMenu, inventory: Inventory, title: Componen
             // An empty slot is a free sack slot; only the decorative glass panes are hidden
             if (slot.item.isEmpty || !slot.item.isSkyblockFiller()) placed += slot
         }
-    }
-
-    /**
-     * Clicking a page title opens that sack's own (vanilla) menu: one normal click on its slot,
-     * exactly what the player would do in the vanilla Sack of Sacks.
-     */
-    private fun openSack(family: String): Boolean {
-        val slot = placed.firstOrNull { s -> s.item.getData(DataTypes.ID)?.let { SackStore.familyOf(it) == family } == true }
-            ?: return false
-        slotClicked(slot, slot.index, 0, ContainerInput.PICKUP)
-        return true
     }
 
     /**
