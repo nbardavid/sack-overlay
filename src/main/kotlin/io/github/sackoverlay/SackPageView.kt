@@ -107,12 +107,11 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             it.action()
             return true
         }
-        // A page title: left click opens the sack or starts a drag (decided on release), right click folds,
-        // Shift + right click hides the page
+        // A page title: left click opens the sack or starts a drag (decided on release), right click folds
         headerRects.firstOrNull { mx in it.x until it.x + it.w && my in it.y until it.y + it.h }?.let {
             when (button) {
                 0 -> drag = Drag(it.family, mx, my, mx - it.x, my - it.y)
-                1 -> if (shift) SackStore.hide(it.family) else toggleFold(it.family)
+                1 -> toggleFold(it.family)
             }
             return true
         }

@@ -146,13 +146,6 @@ class SackConfig {
                                         .build(),
                                 )
                                 .option(
-                                    ButtonOption.createBuilder()
-                                        .name(t("showHiddenPages"))
-                                        .description(OptionDescription.of(t("showHiddenPages.desc")))
-                                        .action { _, _ -> SackStore.showHiddenPages() }
-                                        .build(),
-                                )
-                                .option(
                                     Option.createBuilder<Boolean>()
                                         .name(t("instantUpdates"))
                                         .description(OptionDescription.of(t("instantUpdates.desc")))
@@ -162,6 +155,7 @@ class SackConfig {
                                 )
                                 .build(),
                         )
+                        .group(hiddenPages())
                         .group(
                             OptionGroup.createBuilder()
                                 .name(t("group.search"))
@@ -227,6 +221,26 @@ class SackConfig {
         }
 
         private fun t(key: String): Component = Component.translatable("sackoverlay.config.$key")
+
+        /** One tick box per sack page, folded by default since the list is long. Hidden pages still show while searching. */
+        private fun hiddenPages(): OptionGroup {
+            val pages = SackStore.families.keys.map { it to Gui.familyTitle(it, 1) }.sortedBy { it.second.string } +
+                ("OTHER" to Gui.tr("others"))
+            val group = OptionGroup.createBuilder()
+                .name(t("group.hiddenPages"))
+                .description(OptionDescription.of(t("group.hiddenPages.desc")))
+                .collapsed(true)
+            for ((family, title) in pages) {
+                group.option(
+                    Option.createBuilder<Boolean>()
+                        .name(title)
+                        .binding(false, { SackStore.isHidden(family) }, { SackStore.setHidden(family, it) })
+                        .controller(TickBoxControllerBuilder::create)
+                        .build(),
+                )
+            }
+            return group.build()
+        }
 
         /** A tick box option with a name and a description, both taken from the lang file. */
         private fun bool(key: String, default: Boolean, get: () -> Boolean, set: (Boolean) -> Unit): Option<Boolean> =
