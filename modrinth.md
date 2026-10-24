@@ -3,7 +3,7 @@ Sack Overlay replaces Hypixel SkyBlock's Sack of Sacks menu (`/sacks`) with a si
 ## Features
 - **Every sack at a glance**: one page per sack, laid out in columns, with your inventory where it usually is.
 - **Click to withdraw**: left click fills your inventory, right click takes a stack, Shift + click lets you pick an amount.
-- **Search**: start typing to filter items, or dim the ones that don't match.
+- **Search**: filter items by name, or dim the ones that don't match.
 - **Your layout**: drag pages by their title to reorder them, fold the ones you don't need.
 - **Themes**: transparent, light or dark.
 - **Per profile**: each SkyBlock profile keeps its own sacks.

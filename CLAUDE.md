@@ -42,7 +42,6 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 - `ToolButtons`: one framed settings button with our own gear sprite (`textures/gui/sprites/gear.png`), placed right of the inventory and level with its top. The theme is chosen in the settings only. `/gfs` cooldown: 100 ms.
 - `SearchInput` + `SackKeys` (features taken from Enhanced Storage's ideas):
   - search modes Filter / Dim;
-  - type-to-search: a typing key moves the focus to the box and the char arrives through charTyped, so AZERTY works; keys over a real slot are left alone;
   - optional remembered search and scroll position;
   - `/sackoverlay search <text>` sends /sacks with the search pre-filled;
   - unbound keys "open /sacks" and "search hovered item";

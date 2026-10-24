@@ -4,7 +4,6 @@ import com.mojang.blaze3d.platform.InputConstants
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
 import net.minecraft.client.KeyMapping
-import net.minecraft.client.input.KeyEvent
 import net.minecraft.resources.Identifier
 import tech.thatgravyboat.skyblockapi.api.location.LocationAPI
 import tech.thatgravyboat.skyblockapi.helpers.McClient
@@ -20,7 +19,6 @@ object SackKeys {
         private set
 
     const val KEY_ESCAPE = 256
-    const val KEY_BACKSPACE = 259
     const val KEY_RIGHT = 262
     const val KEY_LEFT = 263
     const val KEY_DOWN = 264
@@ -41,15 +39,5 @@ object SackKeys {
                 if (LocationAPI.isOnSkyBlock) McClient.sendCommand("sacks")
             }
         }
-    }
-
-    /**
-     * Keys that type a character (letters, digits, punctuation, keypad). Used to move the focus to the
-     * search box: the character itself then arrives through charTyped, so any keyboard layout works.
-     */
-    fun isTypingKey(event: KeyEvent): Boolean {
-        if (event.hasControlDown() || event.hasAltDown()) return false
-        val key = event.key()
-        return key in 39..96 || key in 320..336
     }
 }

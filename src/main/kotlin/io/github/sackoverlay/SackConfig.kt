@@ -50,7 +50,6 @@ class SackConfig {
     @SerialEntry @JvmField var glintRefresh = GlintRefresh.FPS_30
     @SerialEntry @JvmField var cachePages = true
     @SerialEntry @JvmField var searchMode = SearchMode.FILTER
-    @SerialEntry @JvmField var searchAutofocus = true
     @SerialEntry @JvmField var rememberSearch = false
     @SerialEntry @JvmField var rememberScroll = true
 
@@ -171,7 +170,6 @@ class SackConfig {
                                         }
                                         .build(),
                                 )
-                                .option(bool("searchAutofocus", defaults.searchAutofocus, { config.searchAutofocus }, { config.searchAutofocus = it }))
                                 .option(bool("rememberSearch", defaults.rememberSearch, { config.rememberSearch }, { config.rememberSearch = it }))
                                 .option(bool("rememberScroll", defaults.rememberScroll, { config.rememberScroll }, { config.rememberScroll = it }))
                                 .build(),

@@ -27,8 +27,6 @@
   "sackoverlay.config.searchMode.desc": "Filter: hide items that don't match, and pages without any match.\nDim: keep every page in place and grey out the items that don't match.",
   "sackoverlay.config.searchMode.filter": "Filter",
   "sackoverlay.config.searchMode.dim": "Dim",
-  "sackoverlay.config.searchAutofocus": "Type to search",
-  "sackoverlay.config.searchAutofocus.desc": "Start typing anywhere (except over a slot) to search, without clicking the search box first.",
   "sackoverlay.config.rememberSearch": "Remember search",
   "sackoverlay.config.rememberSearch.desc": "Keep the last search when the screen is opened again.",
   "sackoverlay.config.rememberScroll": "Remember scroll position",

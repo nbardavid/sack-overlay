@@ -15,9 +15,9 @@ object SearchInput {
     }
 
     /**
-     * Returns true when the key was used here.
+     * Returns true when the key was used here. The search box only takes keys once it was clicked.
      * [slotStack] is the item of the real slot under the mouse (empty stack for an empty slot), or null when
-     * the mouse is not over a real slot. Typing never steals keys from a real slot (hotbar keys, Q to drop).
+     * the mouse is not over a real slot.
      */
     fun keyPressed(event: KeyEvent, search: EditBox, view: SackPageView, slotStack: ItemStack?, focus: (EditBox?) -> Unit): Boolean {
         if (SackKeys.searchHovered.matches(event)) {
@@ -31,15 +31,8 @@ object SearchInput {
             when {
                 // Escape leaves the search box first; a second Escape closes the screen
                 event.key() == SackKeys.KEY_ESCAPE -> focus(null)
-                // With autofocus, erasing an empty box gives the keys back to the screen
-                SackConfig.get.searchAutofocus && search.value.isEmpty() && event.key() == SackKeys.KEY_BACKSPACE -> focus(null)
                 else -> search.keyPressed(event)
             }
-            return true
-        }
-        if (SackConfig.get.searchAutofocus && slotStack == null && SackKeys.isTypingKey(event)) {
-            // The typed character itself arrives right after, through charTyped, into the focused box
-            focus(search)
             return true
         }
         return view.navigate(event.key())

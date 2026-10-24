@@ -27,8 +27,6 @@
   "sackoverlay.config.searchMode.desc": "Filtrer : masque les items qui ne correspondent pas, et les pages sans résultat.\nAtténuer : garde toutes les pages en place et grise les items qui ne correspondent pas.",
   "sackoverlay.config.searchMode.filter": "Filtrer",
   "sackoverlay.config.searchMode.dim": "Atténuer",
-  "sackoverlay.config.searchAutofocus": "Taper pour chercher",
-  "sackoverlay.config.searchAutofocus.desc": "Commence à taper n'importe où (sauf sur une case) pour chercher, sans cliquer d'abord dans la barre de recherche.",
   "sackoverlay.config.rememberSearch": "Garder la recherche",
   "sackoverlay.config.rememberSearch.desc": "Conserve la dernière recherche quand tu rouvres l'écran.",
   "sackoverlay.config.rememberScroll": "Garder la position",
