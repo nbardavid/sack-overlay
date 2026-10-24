@@ -15,8 +15,6 @@ object SackKeys {
 
     lateinit var openSacks: KeyMapping
         private set
-    lateinit var searchHovered: KeyMapping
-        private set
 
     const val KEY_ESCAPE = 256
     const val KEY_RIGHT = 262
@@ -27,9 +25,6 @@ object SackKeys {
     fun register() {
         openSacks = KeyMappingHelper.registerKeyMapping(
             KeyMapping("key.sackoverlay.open_sacks", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.value, CATEGORY),
-        )
-        searchHovered = KeyMappingHelper.registerKeyMapping(
-            KeyMapping("key.sackoverlay.search_hovered", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.value, CATEGORY),
         )
 
         // Key presses only count while no screen is open, so this never fires while typing in chat or a menu

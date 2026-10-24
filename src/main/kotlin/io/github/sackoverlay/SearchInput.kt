@@ -2,10 +2,8 @@ package io.github.sackoverlay
 
 import net.minecraft.client.gui.components.EditBox
 import net.minecraft.client.input.KeyEvent
-import net.minecraft.world.item.ItemStack
-import tech.thatgravyboat.skyblockapi.utils.text.TextProperties.stripped
 
-/** Keyboard handling shared by both screens: search box, "search hovered item" key, arrow navigation. */
+/** Keyboard handling shared by both screens: search box and arrow navigation. */
 object SearchInput {
 
     /** Sets up the search box: initial text and remembering what is typed. */
@@ -14,19 +12,8 @@ object SearchInput {
         search.setResponder { SackPageView.savedQuery = it }
     }
 
-    /**
-     * Returns true when the key was used here. The search box only takes keys once it was clicked.
-     * [slotStack] is the item of the real slot under the mouse (empty stack for an empty slot), or null when
-     * the mouse is not over a real slot.
-     */
-    fun keyPressed(event: KeyEvent, search: EditBox, view: SackPageView, slotStack: ItemStack?, focus: (EditBox?) -> Unit): Boolean {
-        if (SackKeys.searchHovered.matches(event)) {
-            val stack = view.hoveredStack() ?: slotStack?.takeUnless { it.isEmpty }
-            if (stack != null) {
-                search.value = stack.hoverName.stripped
-                return true
-            }
-        }
+    /** Returns true when the key was used here. The search box only takes keys once it was clicked. */
+    fun keyPressed(event: KeyEvent, search: EditBox, view: SackPageView, focus: (EditBox?) -> Unit): Boolean {
         if (search.isFocused) {
             when {
                 // Escape leaves the search box first; a second Escape closes the screen

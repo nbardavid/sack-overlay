@@ -44,7 +44,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
   - search modes Filter / Dim;
   - optional remembered search and scroll position;
   - `/sackoverlay search <text>` sends /sacks with the search pre-filled;
-  - unbound keys "open /sacks" and "search hovered item";
+  - unbound key "open /sacks";
   - arrow keys move the highlight between pages.
 
 ## References studied

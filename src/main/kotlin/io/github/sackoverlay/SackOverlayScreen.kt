@@ -106,7 +106,7 @@ class SackOverlayScreen : Screen(Component.translatable("sackoverlay.ui.title"))
 
     override fun keyPressed(event: KeyEvent): Boolean {
         if (prompt.keyPressed(event.key())) return true
-        if (SearchInput.keyPressed(event, search, view, null) { setFocused(it) }) return true
+        if (SearchInput.keyPressed(event, search, view) { setFocused(it) }) return true
         return super.keyPressed(event)
     }
 

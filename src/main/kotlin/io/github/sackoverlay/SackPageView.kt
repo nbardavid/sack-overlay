@@ -89,9 +89,6 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         return true
     }
 
-    /** The page item under the mouse, used to fill the search box. */
-    fun hoveredStack(): ItemStack? = hovered?.stack
-
     /** Set while a popup is open: no hover, no tooltip, no clicks on the pages. */
     var frozen = false
 

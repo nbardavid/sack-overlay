@@ -19,7 +19,6 @@
 
   "key.category.sackoverlay.main": "Sack Overlay",
   "key.sackoverlay.open_sacks": "Open sacks (/sacks)",
-  "key.sackoverlay.search_hovered": "Search hovered item",
 
   "sackoverlay.config.title": "Sack Overlay",
   "sackoverlay.config.group.search": "Search",

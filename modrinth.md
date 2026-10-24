@@ -19,7 +19,7 @@ The mod only reads what the game already shows you. It makes no extra requests t
 - `/sackoverlay search <text>`: open `/sacks` with a search already typed
 - `/sackoverlay config`: settings (also in Mod Menu and the gear button)
 
-Keybinds to open your sacks and search the hovered item can be set in Controls.
+A keybind to open your sacks can be set in Controls.
 
 ## Credits
 - The idea for this mod comes from [SkyOcean](https://modrinth.com/mod/skyocean), including the way item amounts are shown. Big thanks to the SkyOcean team, whose [SkyblockAPI](https://github.com/SkyblockAPI/SkyblockAPI) provides the sack amounts and whose [meowdding-repo](https://github.com/meowdding/meowdding-repo) provides the item list of each sack.

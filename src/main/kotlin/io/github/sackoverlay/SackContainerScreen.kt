@@ -234,8 +234,8 @@ class SackContainerScreen(menu: ChestMenu, inventory: Inventory, title: Componen
 
     override fun keyPressed(event: KeyEvent): Boolean {
         if (prompt.keyPressed(event.key())) return true
-        // Search box, "search hovered item" key and arrows; typing in the search must not close the screen (E key)
-        if (SearchInput.keyPressed(event, search, view, hoveredSlot?.item) { setFocused(it) }) return true
+        // Search box and arrows; typing in the search must not close the screen (E key)
+        if (SearchInput.keyPressed(event, search, view) { setFocused(it) }) return true
         return super.keyPressed(event)
     }
 

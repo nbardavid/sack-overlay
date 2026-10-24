@@ -23,7 +23,7 @@ A client-side Fabric mod for Hypixel SkyBlock (Minecraft 26.2) that replaces the
 - `/sackoverlay search <text>`: open `/sacks` with a search already typed
 - `/sackoverlay config`: open the settings (also available through Mod Menu or the gear button)
 
-Keybinds for opening your sacks and searching the hovered item can be set in Controls.
+A keybind to open your sacks can be set in Controls.
 
 ## Requirements
 - Fabric API
