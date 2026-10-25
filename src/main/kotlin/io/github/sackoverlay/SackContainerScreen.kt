@@ -225,6 +225,11 @@ class SackContainerScreen(menu: ChestMenu, inventory: Inventory, title: Componen
         return super.keyPressed(event)
     }
 
+    override fun keyReleased(event: KeyEvent): Boolean {
+        if (SearchInput.keyReleased(event)) return true
+        return super.keyReleased(event)
+    }
+
     override fun charTyped(event: CharacterEvent): Boolean {
         if (prompt.charTyped(event.codepoint())) return true
         return super.charTyped(event)

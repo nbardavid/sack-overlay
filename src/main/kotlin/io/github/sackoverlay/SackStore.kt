@@ -56,8 +56,8 @@ object SackStore {
         var pageOrder: MutableList<String> = mutableListOf(),
         /** Pages folded with a right click on their title. */
         var folded: MutableSet<String> = mutableSetOf(),
-        /** Tabs style: families whose page shows its enchanted side. */
-        var enchantedTabs: MutableSet<String> = mutableSetOf(),
+        /** Sacks with an enchanted version show that side (Enchanted button or its key). Same on every profile. */
+        var enchantedView: Boolean = false,
         /** Pages hidden from the settings. */
         var hidden: MutableSet<String> = mutableSetOf(),
         // Saved before data was split per profile; moved into the first profile seen
@@ -80,11 +80,15 @@ object SackStore {
         if (changed) save()
     }
 
-    fun isEnchantedTab(family: String) = family in data.enchantedTabs
+    /** Hold mode: the enchanted key is held down, showing the other side. Not saved. */
+    var enchantedPeek = false
 
-    fun setEnchantedTab(family: String, enchanted: Boolean) {
-        val changed = if (enchanted) data.enchantedTabs.add(family) else data.enchantedTabs.remove(family)
-        if (changed) save()
+    /** Whether sacks with an enchanted sack show their enchanted side right now. */
+    val showEnchanted get() = data.enchantedView != enchantedPeek
+
+    fun toggleEnchantedView() {
+        data.enchantedView = !data.enchantedView
+        save()
     }
 
     fun isHidden(family: String) = family in data.hidden

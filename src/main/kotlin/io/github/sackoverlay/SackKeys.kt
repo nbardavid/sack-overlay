@@ -8,7 +8,7 @@ import net.minecraft.resources.Identifier
 import tech.thatgravyboat.skyblockapi.api.location.LocationAPI
 import tech.thatgravyboat.skyblockapi.helpers.McClient
 
-/** Key bindings (unbound by default, set them in Controls) and the keys the screens react to. */
+/** Key bindings (set them in Controls) and the keys the screens react to. */
 object SackKeys {
 
     private val CATEGORY: KeyMapping.Category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("sackoverlay", "main"))
@@ -16,15 +16,23 @@ object SackKeys {
     lateinit var openSacks: KeyMapping
         private set
 
+    /** Flips sacks between their normal and enchanted side while our screens are open (Left Alt by default). */
+    lateinit var toggleEnchanted: KeyMapping
+        private set
+
     const val KEY_ESCAPE = 256
     const val KEY_RIGHT = 262
     const val KEY_LEFT = 263
     const val KEY_DOWN = 264
     const val KEY_UP = 265
+    private const val KEY_LEFT_ALT = 342
 
     fun register() {
         openSacks = KeyMappingHelper.registerKeyMapping(
             KeyMapping("key.sackoverlay.open_sacks", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.value, CATEGORY),
+        )
+        toggleEnchanted = KeyMappingHelper.registerKeyMapping(
+            KeyMapping("key.sackoverlay.toggle_enchanted", InputConstants.Type.KEYSYM, KEY_LEFT_ALT, CATEGORY),
         )
 
         // Key presses only count while no screen is open, so this never fires while typing in chat or a menu

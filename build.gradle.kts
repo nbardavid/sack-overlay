@@ -1,8 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     kotlin("jvm") version "2.4.0"
     id("net.fabricmc.fabric-loom") version "1.18-SNAPSHOT"
+    // Bundles MoulConfig under our own package, as SkyHanni does, so it never clashes with another copy
+    id("com.gradleup.shadow") version "9.4.1"
 }
 
 version = property("mod_version") as String
@@ -14,9 +17,8 @@ repositories {
     maven("https://maven.teamresourceful.com/repository/maven-public/") {
         content { includeGroupAndSubgroups("tech.thatgravyboat"); includeGroupAndSubgroups("me.owdding") }
     }
-    maven("https://maven.isxander.dev/releases") { content { includeGroupAndSubgroups("dev.isxander") } }
-    // YACL's JSON5 parser
-    maven("https://maven.quiltmc.org/repository/release") { content { includeGroupAndSubgroups("org.quiltmc") } }
+    // MoulConfig, the settings screen library of SkyHanni and NEU
+    maven("https://maven.notenoughupdates.org/releases/") { content { includeGroupAndSubgroups("org.notenoughupdates") } }
     maven("https://maven.terraformersmc.com/releases") { content { includeGroup("com.terraformersmc") } }
     maven("https://repo.hypixel.net/repository/Hypixel") { content { includeGroup("net.hypixel") } }
     maven("https://api.modrinth.com/maven") { content { includeGroup("maven.modrinth") } }
@@ -24,6 +26,9 @@ repositories {
     maven("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1") { content { includeGroup("me.djtheredstoner") } }
     mavenCentral()
 }
+
+// MoulConfig goes inside our jar, relocated (see releaseJar)
+val shade: Configuration by configurations.creating
 
 val sbapiCapability = "tech.thatgravyboat:skyblock-api-${property("minecraft_version")}"
 
@@ -44,8 +49,9 @@ dependencies {
     }
     runtimeOnly("me.djtheredstoner:DevAuth-fabric:${property("devauth_version")}")
 
-    // Settings screen, same library as Skyblocker; Mod Menu is optional
-    implementation("dev.isxander:yet-another-config-lib:${property("yacl_version")}")
+    // Settings screen, same library as SkyHanni; Mod Menu is optional
+    implementation("org.notenoughupdates.moulconfig:modern-${property("minecraft_version")}:${property("moulconfig_version")}")
+    shade("org.notenoughupdates.moulconfig:modern-${property("minecraft_version")}:${property("moulconfig_version")}") { isTransitive = false }
     compileOnly("com.terraformersmc:modmenu:${property("modmenu_version")}")
 
     // Needed by SkyblockAPI at runtime (Hypixel's official mod API)
@@ -116,8 +122,29 @@ tasks.processResources {
         "minecraft" to project.property("minecraft_version"),
         "fabric_kotlin" to project.property("fabric_kotlin_version"),
         "sbapi" to project.property("skyblockapi_version"),
-        "yacl" to (project.property("yacl_version") as String).substringBefore('+'),
     )
     inputs.properties(props)
     filesMatching("fabric.mod.json") { expand(props) }
 }
+
+// The released jar (releaseJar below): our classes with the nested SkyblockAPI jar, plus MoulConfig moved under our package.
+// The jar without MoulConfig stays out of build/libs, which the release workflow uploads
+tasks.jar {
+    archiveClassifier.set("dev")
+    destinationDirectory.set(layout.buildDirectory.dir("devlibs"))
+}
+// A task of our own: the plugin's shadowJar also packs the raw resources, whose fabric.mod.json lacks the
+// nested SkyblockAPI entry that Loom adds to the jar
+val releaseJar = tasks.register<ShadowJar>("releaseJar") {
+    archiveClassifier.set("")
+    from(zipTree(tasks.jar.flatMap { it.archiveFile }))
+    from(shade.elements.map { files -> files.map { zipTree(it) } }) {
+        // MoulConfig's own metadata would replace ours; its access widener entries are copied into ours
+        exclude("fabric.mod.json", "moulconfig.accesswidener", "META-INF/MANIFEST.MF")
+        rename("^LICENSE$", "LICENSE_moulconfig")
+    }
+    relocate("io.github.notenoughupdates.moulconfig", "io.github.sackoverlay.deps.moulconfig")
+    mergeServiceFiles()
+}
+tasks.shadowJar { enabled = false }
+tasks.assemble { dependsOn(releaseJar) }

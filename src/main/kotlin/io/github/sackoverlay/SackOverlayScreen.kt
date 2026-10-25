@@ -110,6 +110,11 @@ class SackOverlayScreen : Screen(Component.translatable("sackoverlay.ui.title"))
         return super.keyPressed(event)
     }
 
+    override fun keyReleased(event: KeyEvent): Boolean {
+        if (SearchInput.keyReleased(event)) return true
+        return super.keyReleased(event)
+    }
+
     override fun charTyped(event: CharacterEvent): Boolean {
         if (prompt.charTyped(event.codepoint())) return true
         return super.charTyped(event)

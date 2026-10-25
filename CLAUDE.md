@@ -25,7 +25,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 - `SackPageView`: shared panel.
   - Columns of sack pages (up to 4), vanilla 18 px slots, amounts at 3/4 scale in at most 3 characters.
   - Two display modes: HYPIXEL shows all items with zeros greyed out; COMPACT shows owned items only, without duplicates.
-  - Normal + enchanted families (`X_SACK` / `ENCHANTED_X_SACK`, both with a page) follow the `enchantedSacks` setting, being tried by the user: TABS (default, one page with an "Ench." chip after the title that flips sides, saved in `data.enchantedTabs`; a search flips to the side holding a match), PAIRED (enchanted page right after its base via `Page.anchor`, owned enchanted items only), MERGED (one page, owned enchanted items after a purple line, `Page.extra`), SEPARATE (old behavior). Each part keeps its own family capacity (`capFamily` / `extraFamily`).
+  - Normal + enchanted families (`X_SACK` / `ENCHANTED_X_SACK`, both with a page) can share one page that shows one side, when `combineEnchanted` is on (off by default: new players get one page per sack). Then an "Enchanted" switch in the top bar (with a tooltip naming the key) or the `toggleEnchanted` key binding (Left Alt by default, rebindable in Controls) flips all of them at once (`data.enchantedView`, shared by all profiles). Setting `enchantedKey`: TOGGLE flips on each press, HOLD shows the other side while held (`SackStore.enchantedPeek`, released through the screens' `keyReleased`). A search shows the side holding a match. The enchanted side uses the enchanted family's capacity (`capFamily`). Tried and dropped by the user: a per-page chip, enchanted page paired next to its base, both merged under a divider, a mouse-wheel slot cycling through forms.
   - Pages can be dragged by their title to reorder them (live preview). The order is saved in `data.pageOrder` and can be reset from the settings.
   - A click on a title (left or right) folds the page (saved in `data.folded`); a left drag moves it. Clicks never hide a page: pages are hidden from a "Hidden pages" group in the settings, one tick box per sack (`data.hidden`). Both are shared by all profiles. Hidden pages show up again while searching.
   - Withdrawing: left click sends `/gfs` with the whole stock (Hypixel only moves what fits), right click sends a stack, Shift + click opens `AmountPrompt`. Full slots get a red overlay.
@@ -38,7 +38,12 @@ Started in a Claude Desktop session; the full conversation export is `../convers
   - It keeps the real `ChestMenu` and only moves the real slots: the player inventory stays centered at the bottom, and the Sack of Sacks slots go into a panel on its left.
   - It reports the real bounds through `leftPos`/`topPos` and `AbstractContainerScreenAccessor` (imageWidth/imageHeight are final in 26.2), so Skyblocker's Quick Nav tabs and RRV place themselves around it. It leaves top and bottom margins when those mods are loaded.
 - `SackOverlayScreen`: standalone, read-only view (`/sackoverlay`).
-- `SackConfig` (YACL, like Skyblocker) + `SackModMenu`: settings via the ⚙ button, Mod Menu, or `/sackoverlay config`. Four tabs: General, Pages (display mode, item order, search, page order, hidden pages), Withdrawing, Performance. Keep settings few: "instant updates" and "remember scroll" were removed and are always on.
+- `SackConfig` (MoulConfig, the settings library of SkyHanni and NEU) + `SackModMenu`: settings via the ⚙ button, Mod Menu, or `/sackoverlay config`. Four categories: General, Pages (display mode, item order, enchanted sacks, page order, search, hidden pages), Withdrawing, Performance.
+  - Options are nested objects per category (`general`, `pages`, `withdraw`, `performance`); the rest of the mod reads flat properties on `SackConfig`. Saved with our own Gson to `config/sackoverlay/config.json`; the old flat YACL file is migrated on load.
+  - Annotation names/descriptions are lang keys, translated by `TranslatedProcessor` when the screen opens (MoulConfig itself only shows literal text). Enum values show their lang name through `toString()`.
+  - `HiddenPagesEditor`: custom editor (one switch per sack page, 3 columns) since pages are not fixed fields.
+  - MoulConfig is shaded and relocated to `io.github.sackoverlay.deps.moulconfig` by the Shadow plugin, like SkyHanni, and its access widener entries are copied into ours. The unshaded jar goes to `build/devlibs`.
+  - Keep settings few: "instant updates" and "remember scroll" were removed and are always on.
 - Only the Sack of Sacks is replaced: the user wants each sack's own menu to stay vanilla. A version that replaced them with live slots inside the page was tried and removed. A click on a page title only folds the page. Never click a real Sack of Sacks slot from the panel: on Hypixel that takes the sack out of the Sack of Sacks (an earlier "open the sack from its title" feature did exactly that and was removed).
 - `/gfs` is slower than menu clicks: Hypixel handles commands with more latency. This cannot be fixed client-side; one left click (whole stock) avoids spamming. At most one `/gfs` goes out per `withdrawDelayMs` (500 ms by default). Clicks in between add up in `queuedWithdraw` and are flushed as one command; the slot shows a bottom-up white fill (`waitFill`) meanwhile. A queue still pending when the screen closes is dropped on purpose.
 - `Theme` (Transparent default / Light / Dark). Frames are drawn in code in the vanilla menu style that Enhanced Storage uses: a black outline with cut corners, a raised edge and bevelled slots. No Enhanced Storage assets are copied (they are GPL).
@@ -62,7 +67,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 
 ## Releases
 - Repo: https://github.com/nbardavid/sack-overlay (development happens on this PC).
-- Versions: small features and fixes bump the last number only (0.3.0 → 0.3.1); the middle number is for a real batch of features, when the user asks.
+- Versions: small features and fixes bump the last number only (0.3.0 → 0.3.1); the middle number is for a real batch of features, when the user asks. While testing unreleased work, rebuilds keep the same version: bump once per release, not per test build.
 - Bump `mod_version` in `gradle.properties`, commit and push, then `gh release create v<version> --generate-notes`: `.github/workflows/publish.yml` builds the jar, attaches it to the release and uploads it to Modrinth (secret `MODRINTH_TOKEN`, variable `MODRINTH_ID` = `YZojHzPT`).
 
 - Modrinth project: https://modrinth.com/mod/sack-overlay-hypixel-skyblock (owner "lourio"), submitted for review on 2026-10-23. `modrinth.md` holds the page description.
@@ -70,7 +75,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 
 ## Build
 - `./gradlew build` (on macOS run `chmod +x gradlew` first). The foojay plugin downloads JDK 25 if needed.
-- Versions live in `gradle.properties` (MC 26.2, Fabric Loom 1.18, Kotlin 2.4, SkyblockAPI 4.2.42 bundled with `include`, YACL 3.9.5).
+- Versions live in `gradle.properties` (MC 26.2, Fabric Loom 1.18, Kotlin 2.4, SkyblockAPI 4.2.42 bundled with `include`, MoulConfig 4.8.0 shaded).
 - Tested in game in the user's Modrinth "SkyBlock Enhanced" profile alongside Skyblocker, SkyOcean, SkyHanni, Enhanced Storage, RRV and Catharsis.
 
 ## Known gaps

@@ -7,6 +7,9 @@ enum class GlintRefresh(val intervalMillis: Long) {
     SMOOTH(0),
     FPS_30(1000L / 30),
     FPS_20(1000L / 20),
+    ;
+
+    override fun toString() = SackConfig.valueName("glintRefresh", this)
 }
 
 /**

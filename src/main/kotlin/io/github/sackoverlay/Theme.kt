@@ -54,6 +54,8 @@ enum class Theme(
     ),
     ;
 
+    override fun toString() = SackConfig.valueName("theme", this)
+
     companion object {
         val current: Theme get() = SackConfig.get.theme
     }

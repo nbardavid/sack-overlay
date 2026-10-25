@@ -28,8 +28,7 @@
     "minecraft": "~${minecraft}",
     "fabric-api": "*",
     "fabric-language-kotlin": ">=${fabric_kotlin}",
-    "skyblock-api": ">=${sbapi}",
-    "yet_another_config_lib_v3": ">=${yacl}"
+    "skyblock-api": ">=${sbapi}"
   },
   "suggests": {
     "modmenu": "*"

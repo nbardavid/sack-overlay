@@ -1,22 +1,31 @@
 package io.github.sackoverlay
 
-import dev.isxander.yacl3.api.ButtonOption
-import dev.isxander.yacl3.api.ConfigCategory
-import dev.isxander.yacl3.api.Option
-import dev.isxander.yacl3.api.OptionDescription
-import dev.isxander.yacl3.api.OptionGroup
-import dev.isxander.yacl3.api.YetAnotherConfigLib
-import dev.isxander.yacl3.api.controller.EnumControllerBuilder
-import dev.isxander.yacl3.api.controller.IntegerFieldControllerBuilder
-import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder
-import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder
-import dev.isxander.yacl3.config.v2.api.ConfigClassHandler
-import dev.isxander.yacl3.config.v2.api.SerialEntry
-import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import io.github.notenoughupdates.moulconfig.Config
+import io.github.notenoughupdates.moulconfig.annotations.Accordion
+import io.github.notenoughupdates.moulconfig.annotations.Category
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider
+import io.github.notenoughupdates.moulconfig.annotations.ConfigOption
+import io.github.notenoughupdates.moulconfig.common.text.StructuredText
+import io.github.notenoughupdates.moulconfig.gui.GuiContext
+import io.github.notenoughupdates.moulconfig.gui.GuiElementComponent
+import io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor
+import io.github.notenoughupdates.moulconfig.platform.MoulConfigScreenComponent
+import io.github.notenoughupdates.moulconfig.processor.BuiltinMoulConfigGuis
+import io.github.notenoughupdates.moulconfig.processor.ConfigProcessorDriver
+import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.resources.language.I18n
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.Identifier
+import org.slf4j.LoggerFactory
+import tech.thatgravyboat.skyblockapi.helpers.McClient
+import java.lang.reflect.Field
 
 /** How each sack page lists its items. */
 enum class DisplayMode {
@@ -25,6 +34,9 @@ enum class DisplayMode {
 
     /** Only the items you own, each shown once. */
     COMPACT,
+    ;
+
+    override fun toString() = SackConfig.valueName("displayMode", this)
 }
 
 /** Order of the items inside each sack page. */
@@ -34,21 +46,21 @@ enum class ItemOrder {
 
     /** Hypixel's menu order, mostly alphabetical. */
     HYPIXEL,
+    ;
+
+    override fun toString() = SackConfig.valueName("itemOrder", this)
 }
 
-/** How a sack and its enchanted sack (Mining / Enchanted Mining...) are shown when both have a page. */
-enum class EnchantedSacks {
-    /** One page with a chip in the title that flips it between the normal and the enchanted side. */
-    TABS,
+/** What the enchanted key does. */
+enum class EnchantedKey {
+    /** Each press flips sacks to the other side. */
+    TOGGLE,
 
-    /** Two pages always side by side; the enchanted one only lists owned items. */
-    PAIRED,
+    /** The other side is shown while the key is held. */
+    HOLD,
+    ;
 
-    /** One page: normal items, then the owned enchanted ones under a divider. */
-    MERGED,
-
-    /** Two independent pages, as before. */
-    SEPARATE,
+    override fun toString() = SackConfig.valueName("enchantedKey", this)
 }
 
 /** What the search box does to items that don't match. */
@@ -58,170 +70,271 @@ enum class SearchMode {
 
     /** Keep every page in place and grey out the items that don't match. */
     DIM,
+    ;
+
+    override fun toString() = SackConfig.valueName("searchMode", this)
 }
 
-/** User settings, saved to config/sackoverlay/config.json and edited through YACL like Skyblocker's. */
-class SackConfig {
-    @SerialEntry @JvmField var replaceSackScreen = true
-    @SerialEntry @JvmField var theme = Theme.TRANSPARENT
-    @SerialEntry @JvmField var displayMode = DisplayMode.HYPIXEL
-    @SerialEntry @JvmField var itemOrder = ItemOrder.LOGICAL
-    @SerialEntry @JvmField var enchantedSacks = EnchantedSacks.TABS
-    @SerialEntry @JvmField var rarityBackgrounds = true
-    @SerialEntry @JvmField var maxColumns = 4
-    @SerialEntry @JvmField var leftClickFillsInventory = true
-    @SerialEntry @JvmField var leftClickAmount = 64
-    @SerialEntry @JvmField var rightClickStack = 64
-    @SerialEntry @JvmField var withdrawDelayMs = 500
-    @SerialEntry @JvmField var glintRefresh = GlintRefresh.FPS_30
-    @SerialEntry @JvmField var cachePages = true
-    @SerialEntry @JvmField var searchMode = SearchMode.FILTER
-    @SerialEntry @JvmField var rememberSearch = false
+/**
+ * User settings, saved to config/sackoverlay/config.json and edited with MoulConfig, the settings screen of SkyHanni
+ * and NEU. Names and descriptions in the annotations are lang keys, translated when the screen opens.
+ * The rest of the mod reads the flat properties at the bottom.
+ */
+class SackConfig : Config() {
+
+    @JvmField
+    @Category(name = K + "category.general", desc = K + "category.general.desc")
+    var general = General()
+
+    @JvmField
+    @Category(name = K + "category.pages", desc = K + "category.pages.desc")
+    var pages = Pages()
+
+    @JvmField
+    @Category(name = K + "category.withdraw", desc = K + "category.withdraw.desc")
+    var withdraw = Withdraw()
+
+    @JvmField
+    @Category(name = K + "category.performance", desc = K + "category.performance.desc")
+    var performance = Performance()
+
+    class General {
+        @JvmField
+        @ConfigOption(name = K + "replaceSackScreen", desc = K + "replaceSackScreen.desc")
+        @ConfigEditorBoolean
+        var replaceSackScreen = true
+
+        @JvmField
+        @ConfigOption(name = K + "theme", desc = K + "theme.desc")
+        @ConfigEditorDropdown
+        var theme = Theme.TRANSPARENT
+
+        @JvmField
+        @ConfigOption(name = K + "rarityBackgrounds", desc = K + "rarityBackgrounds.desc")
+        @ConfigEditorBoolean
+        var rarityBackgrounds = true
+
+        @JvmField
+        @ConfigOption(name = K + "maxColumns", desc = K + "maxColumns.desc")
+        @ConfigEditorSlider(minValue = 1f, maxValue = 4f, minStep = 1f)
+        var maxColumns = 4f
+    }
+
+    class Pages {
+        @JvmField
+        @ConfigOption(name = K + "displayMode", desc = K + "displayMode.desc")
+        @ConfigEditorDropdown
+        var displayMode = DisplayMode.HYPIXEL
+
+        @JvmField
+        @ConfigOption(name = K + "itemOrder", desc = K + "itemOrder.desc")
+        @ConfigEditorDropdown
+        var itemOrder = ItemOrder.LOGICAL
+
+        @JvmField
+        @ConfigOption(name = K + "combineEnchanted", desc = K + "combineEnchanted.desc")
+        @ConfigEditorBoolean
+        var combineEnchanted = false
+
+        @JvmField
+        @ConfigOption(name = K + "enchantedKey", desc = K + "enchantedKey.desc")
+        @ConfigEditorDropdown
+        var enchantedKey = EnchantedKey.TOGGLE
+
+        @Transient
+        @JvmField
+        @ConfigOption(name = K + "resetPageOrder", desc = K + "resetPageOrder.desc")
+        @ConfigEditorButton(buttonText = "Reset")
+        var resetPageOrder = Runnable { SackStore.resetPageOrder() }
+
+        @JvmField
+        @ConfigOption(name = K + "group.search", desc = "")
+        @Accordion
+        var search = Search()
+
+        @Transient
+        @JvmField
+        @ConfigOption(name = K + "group.hiddenPages", desc = K + "group.hiddenPages.desc")
+        @Accordion
+        var hiddenPages = HiddenPages()
+    }
+
+    class Search {
+        @JvmField
+        @ConfigOption(name = K + "searchMode", desc = K + "searchMode.desc")
+        @ConfigEditorDropdown
+        var searchMode = SearchMode.FILTER
+
+        @JvmField
+        @ConfigOption(name = K + "rememberSearch", desc = K + "rememberSearch.desc")
+        @ConfigEditorBoolean
+        var rememberSearch = false
+    }
+
+    /** Hidden pages live in SackStore's data; this only holds the editor that lists them. */
+    class HiddenPages {
+        @Transient
+        @JvmField
+        @ConfigOption(name = K + "group.hiddenPages", desc = K + "group.hiddenPages.desc")
+        @HiddenPagesEditor.Marker
+        var list = false
+    }
+
+    class Withdraw {
+        @JvmField
+        @ConfigOption(name = K + "leftClickFillsInventory", desc = K + "leftClickFillsInventory.desc")
+        @ConfigEditorBoolean
+        var leftClickFillsInventory = true
+
+        @JvmField
+        @ConfigOption(name = K + "leftClickAmount", desc = K + "leftClickAmount.desc")
+        @ConfigEditorSlider(minValue = 1f, maxValue = 2240f, minStep = 1f)
+        var leftClickAmount = 64f
+
+        @JvmField
+        @ConfigOption(name = K + "rightClickStack", desc = K + "rightClickStack.desc")
+        @ConfigEditorSlider(minValue = 1f, maxValue = 2240f, minStep = 1f)
+        var rightClickStack = 64f
+
+        @JvmField
+        @ConfigOption(name = K + "withdrawDelayMs", desc = K + "withdrawDelayMs.desc")
+        @ConfigEditorSlider(minValue = 100f, maxValue = 1000f, minStep = 50f)
+        var withdrawDelayMs = 500f
+    }
+
+    class Performance {
+        @JvmField
+        @ConfigOption(name = K + "glintRefresh", desc = K + "glintRefresh.desc")
+        @ConfigEditorDropdown
+        var glintRefresh = GlintRefresh.FPS_30
+
+        @JvmField
+        @ConfigOption(name = K + "cachePages", desc = K + "cachePages.desc")
+        @ConfigEditorBoolean
+        var cachePages = true
+    }
+
+    override fun getTitle(): StructuredText = StructuredText.of("Sack Overlay")
+
+    // Flat access for the rest of the mod
+    val replaceSackScreen get() = general.replaceSackScreen
+    var theme
+        get() = general.theme
+        set(value) {
+            general.theme = value
+        }
+    val rarityBackgrounds get() = general.rarityBackgrounds
+    val maxColumns get() = general.maxColumns.toInt()
+    var displayMode
+        get() = pages.displayMode
+        set(value) {
+            pages.displayMode = value
+        }
+    val itemOrder get() = pages.itemOrder
+    val combineEnchanted get() = pages.combineEnchanted
+    val enchantedKey get() = pages.enchantedKey
+    val searchMode get() = pages.search.searchMode
+    val rememberSearch get() = pages.search.rememberSearch
+    val leftClickFillsInventory get() = withdraw.leftClickFillsInventory
+    val leftClickAmount get() = withdraw.leftClickAmount.toInt()
+    val rightClickStack get() = withdraw.rightClickStack.toInt()
+    val withdrawDelayMs get() = withdraw.withdrawDelayMs.toInt()
+    val glintRefresh get() = performance.glintRefresh
+    val cachePages get() = performance.cachePages
 
     companion object {
-        private val HANDLER: ConfigClassHandler<SackConfig> = ConfigClassHandler.createBuilder(SackConfig::class.java)
-            .id(Identifier.fromNamespaceAndPath("sackoverlay", "config"))
-            .serializer { config ->
-                GsonConfigSerializerBuilder.create(config)
-                    .setPath(FabricLoader.getInstance().configDir.resolve("sackoverlay/config.json"))
-                    .build()
-            }
-            .build()
+        private const val K = "sackoverlay.config."
 
-        val get: SackConfig get() = HANDLER.instance()
+        private val logger = LoggerFactory.getLogger("sackoverlay")
+        private val file = FabricLoader.getInstance().configDir.resolve("sackoverlay/config.json").toFile()
+        private val gson = GsonBuilder().setPrettyPrinting().create()
+
+        var get = SackConfig()
+            private set
+
+        /** Shown name of an enum value in the settings: "<key>.<value in lowercase>" in the lang file. */
+        fun valueName(key: String, value: Enum<*>): String = I18n.get(K + key + "." + value.name.lowercase())
 
         fun load() {
-            HANDLER.load()
+            get = try {
+                if (file.exists()) {
+                    val json = JsonParser.parseString(file.readText()).asJsonObject
+                    gson.fromJson(if (json.has("general")) json else migrate(json), SackConfig::class.java)
+                } else {
+                    SackConfig()
+                }
+            } catch (e: Exception) {
+                logger.warn("Could not read the settings, using the defaults", e)
+                SackConfig()
+            }
         }
 
         fun save() {
-            HANDLER.save()
+            try {
+                file.parentFile.mkdirs()
+                file.writeText(gson.toJson(get))
+            } catch (e: Exception) {
+                logger.warn("Could not save the settings", e)
+            }
+        }
+
+        /** Settings saved before the move to MoulConfig were flat (YACL); each one goes into its category. */
+        private fun migrate(old: JsonObject): JsonObject {
+            val categories = mapOf(
+                "general" to listOf("replaceSackScreen", "theme", "rarityBackgrounds", "maxColumns"),
+                "pages" to listOf("displayMode", "itemOrder", "combineEnchanted", "enchantedKey"),
+                "withdraw" to listOf("leftClickFillsInventory", "leftClickAmount", "rightClickStack", "withdrawDelayMs"),
+                "performance" to listOf("glintRefresh", "cachePages"),
+            )
+            val json = JsonObject()
+            for ((category, keys) in categories) {
+                val obj = JsonObject()
+                keys.filter(old::has).forEach { obj.add(it, old[it]) }
+                json.add(category, obj)
+            }
+            val search = JsonObject()
+            listOf("searchMode", "rememberSearch").filter(old::has).forEach { search.add(it, old[it]) }
+            json.getAsJsonObject("pages").add("search", search)
+            return json
         }
 
         fun screen(parent: Screen?): Screen {
-            val defaults = HANDLER.defaults()
-            val config = get
-            return YetAnotherConfigLib.createBuilder()
-                .title(t("title"))
-                .category(
-                    ConfigCategory.createBuilder()
-                        .name(t("category.general"))
-                        .option(bool("replaceSackScreen", defaults.replaceSackScreen, { config.replaceSackScreen }, { config.replaceSackScreen = it }))
-                        .option(enum("theme", defaults.theme, { config.theme }, { config.theme = it }))
-                        .option(bool("rarityBackgrounds", defaults.rarityBackgrounds, { config.rarityBackgrounds }, { config.rarityBackgrounds = it }))
-                        .option(
-                            Option.createBuilder<Int>()
-                                .name(t("maxColumns"))
-                                .description(OptionDescription.of(t("maxColumns.desc")))
-                                .binding(defaults.maxColumns, { config.maxColumns }, { config.maxColumns = it })
-                                .controller { option -> IntegerSliderControllerBuilder.create(option).range(1, 4).step(1) }
-                                .build(),
-                        )
-                        .build(),
-                )
-                .category(
-                    ConfigCategory.createBuilder()
-                        .name(t("category.pages"))
-                        .option(enum("displayMode", defaults.displayMode, { config.displayMode }, { config.displayMode = it }))
-                        .option(enum("itemOrder", defaults.itemOrder, { config.itemOrder }, { config.itemOrder = it }))
-                        .option(enum("enchantedSacks", defaults.enchantedSacks, { config.enchantedSacks }, { config.enchantedSacks = it }))
-                        .option(
-                            ButtonOption.createBuilder()
-                                .name(t("resetPageOrder"))
-                                .description(OptionDescription.of(t("resetPageOrder.desc")))
-                                .action { _, _ -> SackStore.resetPageOrder() }
-                                .build(),
-                        )
-                        .group(
-                            OptionGroup.createBuilder()
-                                .name(t("group.search"))
-                                .option(enum("searchMode", defaults.searchMode, { config.searchMode }, { config.searchMode = it }))
-                                .option(bool("rememberSearch", defaults.rememberSearch, { config.rememberSearch }, { config.rememberSearch = it }))
-                                .build(),
-                        )
-                        .group(hiddenPages())
-                        .build(),
-                )
-                .category(
-                    ConfigCategory.createBuilder()
-                        .name(t("category.withdraw"))
-                        .tooltip(t("category.withdraw.desc"))
-                        .option(bool("leftClickFillsInventory", defaults.leftClickFillsInventory, { config.leftClickFillsInventory }, { config.leftClickFillsInventory = it }))
-                        .option(amount("leftClickAmount", defaults.leftClickAmount, { config.leftClickAmount }, { config.leftClickAmount = it }))
-                        .option(amount("rightClickStack", defaults.rightClickStack, { config.rightClickStack }, { config.rightClickStack = it }))
-                        .option(
-                            Option.createBuilder<Int>()
-                                .name(t("withdrawDelayMs"))
-                                .description(OptionDescription.of(t("withdrawDelayMs.desc")))
-                                .binding(defaults.withdrawDelayMs, { config.withdrawDelayMs }, { config.withdrawDelayMs = it })
-                                .controller { option -> IntegerSliderControllerBuilder.create(option).range(100, 1000).step(50) }
-                                .build(),
-                        )
-                        .build(),
-                )
-                .category(
-                    ConfigCategory.createBuilder()
-                        .name(t("category.performance"))
-                        .option(enum("glintRefresh", defaults.glintRefresh, { config.glintRefresh }, { config.glintRefresh = it }))
-                        .option(bool("cachePages", defaults.cachePages, { config.cachePages }, { config.cachePages = it }))
-                        .build(),
-                )
-                .save(::save)
-                .build()
-                .generateScreen(parent)
+            val processor = TranslatedProcessor(get)
+            BuiltinMoulConfigGuis.addProcessors(processor)
+            processor.registerConfigEditor(HiddenPagesEditor.Marker::class.java) { option, _ -> HiddenPagesEditor(option) }
+            ConfigProcessorDriver(processor).apply { checkExpose = false }.processConfig(get)
+            return SettingsScreen(GuiContext(GuiElementComponent(MoulConfigEditor(processor))), parent)
+        }
+    }
+
+    /** Saves when closed and goes back to the screen it was opened from (Mod Menu, /sackoverlay). */
+    private class SettingsScreen(context: GuiContext, private val parent: Screen?) :
+        MoulConfigScreenComponent(Component.literal("Sack Overlay"), context, parent) {
+
+        override fun removed() {
+            super.removed()
+            save()
         }
 
-        private fun t(key: String): Component = Component.translatable("sackoverlay.config.$key")
-
-        /** One tick box per sack page, folded by default since the list is long. Hidden pages still show while searching. */
-        private fun hiddenPages(): OptionGroup {
-            val pages = SackStore.families.keys.map { it to Gui.familyTitle(it, 1) }.sortedBy { it.second.string } +
-                ("OTHER" to Gui.tr("others"))
-            val group = OptionGroup.createBuilder()
-                .name(t("group.hiddenPages"))
-                .description(OptionDescription.of(t("group.hiddenPages.desc")))
-                .collapsed(true)
-            for ((family, title) in pages) {
-                group.option(
-                    Option.createBuilder<Boolean>()
-                        .name(title)
-                        .binding(false, { SackStore.isHidden(family) }, { SackStore.setHidden(family, it) })
-                        .controller(TickBoxControllerBuilder::create)
-                        .build(),
-                )
-            }
-            return group.build()
+        override fun onClose() {
+            super.onClose()
+            if (parent != null) McClient.setScreen(parent)
         }
+    }
 
-        /** A choice between enum values; names come from the lang file as "<key>.<value in lowercase>". */
-        private inline fun <reified E : Enum<E>> enum(key: String, default: E, noinline get: () -> E, noinline set: (E) -> Unit): Option<E> =
-            Option.createBuilder<E>()
-                .name(t(key))
-                .description(OptionDescription.of(t("$key.desc")))
-                .binding(default, get, set)
-                .controller { option ->
-                    EnumControllerBuilder.create(option)
-                        .enumClass(E::class.java)
-                        .formatValue { t("$key.${it.name.lowercase()}") }
-                }
-                .build()
+    /** Reads the lang keys of the annotations in the current language. */
+    private class TranslatedProcessor(config: SackConfig) : MoulConfigProcessor<SackConfig>(config) {
+        override fun beginCategory(baseObject: Any, field: Field, name: String, description: String) =
+            super.beginCategory(baseObject, field, tr(name), tr(description))
 
-        /** An item amount typed in a field, up to one small sack's capacity. */
-        private fun amount(key: String, default: Int, get: () -> Int, set: (Int) -> Unit): Option<Int> =
-            Option.createBuilder<Int>()
-                .name(t(key))
-                .description(OptionDescription.of(t("$key.desc")))
-                .binding(default, get, set)
-                .controller { option -> IntegerFieldControllerBuilder.create(option).range(1, 2240) }
-                .build()
+        override fun beginAccordion(baseObject: Any, field: Field, option: ConfigOption, id: Int) =
+            super.beginAccordion(baseObject, field, tr(option), id)
 
-        /** A tick box option with a name and a description, both taken from the lang file. */
-        private fun bool(key: String, default: Boolean, get: () -> Boolean, set: (Boolean) -> Unit): Option<Boolean> =
-            Option.createBuilder<Boolean>()
-                .name(t(key))
-                .description(OptionDescription.of(t("$key.desc")))
-                .binding(default, get, set)
-                .controller(TickBoxControllerBuilder::create)
-                .build()
+        override fun emitOption(baseObject: Any, field: Field, option: ConfigOption) =
+            super.emitOption(baseObject, field, tr(option))
+
+        private fun tr(key: String) = if (key.isEmpty()) "" else I18n.get(key)
+
+        private fun tr(option: ConfigOption) = ConfigOption(name = tr(option.name), desc = tr(option.desc))
     }
 }

@@ -43,5 +43,4 @@ jobs:
           dependencies: |
             fabric-api(required){modrinth:fabric-api}
             fabric-language-kotlin(required){modrinth:fabric-language-kotlin}
-            yet_another_config_lib_v3(required){modrinth:yacl}
             modmenu(optional){modrinth:modmenu}

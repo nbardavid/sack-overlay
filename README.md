@@ -28,7 +28,6 @@ A keybind to open your sacks can be set in Controls.
 ## Requirements
 - Fabric API
 - Fabric Language Kotlin
-- YetAnotherConfigLib
 - Mod Menu (optional)
 
 ## Building
@@ -39,6 +38,7 @@ A keybind to open your sacks can be set in Controls.
 ## Credits
 - The idea for this mod comes from [SkyOcean](https://modrinth.com/mod/skyocean), including the way item amounts are shown. Big thanks to the SkyOcean team, whose [SkyblockAPI](https://github.com/SkyblockAPI/SkyblockAPI) provides the sack amounts and whose [meowdding-repo](https://github.com/meowdding/meowdding-repo) provides the item list of each sack.
 - The look of the screen is inspired by [Skyblock Enhanced Storage](https://modrinth.com/mod/skyblock-enhanced-storage) by Kd_Gaming1. Thanks for such a great storage overlay.
+- The settings screen is [MoulConfig](https://github.com/NotEnoughUpdates/MoulConfig) (LGPL-3.0), the same one SkyHanni and NEU use, bundled in the mod.
 
 ## License
 MIT
