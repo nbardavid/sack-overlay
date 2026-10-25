@@ -20,6 +20,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
   - The `Stored: X/Y` value read from a sack's menu is only trusted while the same sacks stay equipped.
   - Otherwise the capacity is the sum of each sack's known capacity: the wiki sizes, or a per-sack value learned from the menu (e.g. BEGINNER = 640).
 - Item → sack mapping: `assets/sackoverlay/sacks.json`, taken from meowdding-repo (MIT, license file alongside).
+- Item order inside a page: Hypixel's menu order (recorded layout, else sacks.json) is mostly alphabetical, so by default (`itemOrder = LOGICAL`) it is re-sorted with `assets/sackoverlay/sort.json`, a hand-written order per family: grouped by source, lower tiers first, compressed forms next to their base. Items it doesn't list (new Hypixel items) keep their relative order after the listed ones. Gemstone, Mutations, Witch and the frog sacks have no entry (their game order is fine or there is no clear logic).
 - `Gui`: shared sizes, theme colors, `tr()` and the vanilla-style frames (`panel`, `card`, `slot`, `border`). `Amounts`: amount and capacity labels. `SackTooltip`: the page item tooltip. `WithdrawQueue`: the `/gfs` queue, one per screen.
 - `SackPageView`: shared panel.
   - Columns of sack pages (up to 4), vanilla 18 px slots, amounts at 3/4 scale in at most 3 characters.

@@ -27,6 +27,15 @@ enum class DisplayMode {
     COMPACT,
 }
 
+/** Order of the items inside each sack page. */
+enum class ItemOrder {
+    /** Grouped by source, lower tiers first, compressed forms next to their base (sort.json). */
+    LOGICAL,
+
+    /** Hypixel's menu order, mostly alphabetical. */
+    HYPIXEL,
+}
+
 /** What the search box does to items that don't match. */
 enum class SearchMode {
     /** Hide them, and hide pages left without any match. */
@@ -41,6 +50,7 @@ class SackConfig {
     @SerialEntry @JvmField var replaceSackScreen = true
     @SerialEntry @JvmField var theme = Theme.TRANSPARENT
     @SerialEntry @JvmField var displayMode = DisplayMode.HYPIXEL
+    @SerialEntry @JvmField var itemOrder = ItemOrder.LOGICAL
     @SerialEntry @JvmField var maxColumns = 4
     @SerialEntry @JvmField var leftClickFillsInventory = true
     @SerialEntry @JvmField var leftClickAmount = 64
@@ -113,6 +123,18 @@ class SackConfig {
                                             EnumControllerBuilder.create(option)
                                                 .enumClass(DisplayMode::class.java)
                                                 .formatValue { t("displayMode.${it.name.lowercase()}") }
+                                        }
+                                        .build(),
+                                )
+                                .option(
+                                    Option.createBuilder<ItemOrder>()
+                                        .name(t("itemOrder"))
+                                        .description(OptionDescription.of(t("itemOrder.desc")))
+                                        .binding(defaults.itemOrder, { config.itemOrder }, { config.itemOrder = it })
+                                        .controller { option ->
+                                            EnumControllerBuilder.create(option)
+                                                .enumClass(ItemOrder::class.java)
+                                                .formatValue { t("itemOrder.${it.name.lowercase()}") }
                                         }
                                         .build(),
                                 )

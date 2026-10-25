@@ -1,6 +1,7 @@
 package io.github.sackoverlay
 
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
@@ -122,6 +123,18 @@ object SackStore {
     var families: Map<String, List<String>> = emptyMap()
         private set
 
+    // Logical item order per family (sort.json): item id -> rank
+    private var logicalRanks: Map<String, Map<String, Int>> = emptyMap()
+
+    /**
+     * [items] in the logical order of [family] (grouped by source, lower tiers first, compressed forms next to
+     * their base). Items the order file doesn't list keep their place relative to each other, after the others.
+     */
+    fun logicalOrder(family: String, items: List<String>): List<String> {
+        val ranks = logicalRanks[family] ?: return items
+        return items.withIndex().sortedBy { (i, id) -> ranks[id] ?: (ranks.size + i) }.map { it.value }
+    }
+
     private val gson = GsonBuilder().setPrettyPrinting().create()
     private val file get() = FabricLoader.getInstance().configDir.resolve("sackoverlay/data.json")
 
@@ -142,6 +155,12 @@ object SackStore {
             families = gson.fromJson(json, Array<SackDef>::class.java)
                 .associate { familyOf(it.sack) to it.items }
         }.onFailure { logger.error("Could not read sacks.json", it) }
+        runCatching {
+            val json = SackStore::class.java.getResourceAsStream("/assets/sackoverlay/sort.json")!!.reader().readText()
+            logicalRanks = JsonParser.parseString(json).asJsonObject.entrySet()
+                .filter { it.value.isJsonArray }
+                .associate { (family, ids) -> family to ids.asJsonArray.withIndex().associate { (i, id) -> id.asString to i } }
+        }.onFailure { logger.error("Could not read sort.json", it) }
         runCatching {
             if (file.exists()) data = gson.fromJson(file.readText(), Data::class.java) ?: Data()
         }.onFailure { logger.error("Could not read data.json", it) }

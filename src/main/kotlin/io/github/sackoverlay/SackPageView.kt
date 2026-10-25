@@ -206,7 +206,8 @@ class SackPageView(private val font: Font, private val query: () -> String) {
 
         val shown = mutableSetOf<String>()
         val pages = sorted.mapNotNull { family ->
-            val all = data.layouts[family] ?: families[family].orEmpty()
+            val base = data.layouts[family] ?: families[family].orEmpty()
+            val all = if (SackConfig.get.itemOrder == ItemOrder.LOGICAL) SackStore.logicalOrder(family, base) else base
             val items = if (hypixelMode) all else all.filter { SackStore.count(it) > 0 && it !in shown }
             shown += items
             if (items.isEmpty()) null else Page(family, Gui.familyTitle(family, owned.count { it == family }), items)
