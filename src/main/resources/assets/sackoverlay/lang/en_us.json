@@ -49,6 +49,8 @@
   "sackoverlay.config.itemOrder.desc": "Logical: inside each sack, items are grouped by where they come from, lower tiers first, compressed forms next to their base (all shark teeth together, for example).\nHypixel: the order of Hypixel's menus, mostly alphabetical.",
   "sackoverlay.config.itemOrder.logical": "Logical",
   "sackoverlay.config.itemOrder.hypixel": "Hypixel",
+  "sackoverlay.config.rarityBackgrounds": "Item rarity backgrounds",
+  "sackoverlay.config.rarityBackgrounds.desc": "Color the background of each item with its rarity. With Skyblocker installed, its own item rarity backgrounds are used, with its style, opacity and on/off settings.",
   "sackoverlay.config.maxColumns": "Maximum columns",
   "sackoverlay.config.maxColumns.desc": "Upper limit on side-by-side sack pages. Fewer are used when the screen is too narrow.",
   "sackoverlay.config.glintRefresh": "Enchant glint refresh rate",

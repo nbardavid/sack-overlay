@@ -51,6 +51,7 @@ class SackConfig {
     @SerialEntry @JvmField var theme = Theme.TRANSPARENT
     @SerialEntry @JvmField var displayMode = DisplayMode.HYPIXEL
     @SerialEntry @JvmField var itemOrder = ItemOrder.LOGICAL
+    @SerialEntry @JvmField var rarityBackgrounds = true
     @SerialEntry @JvmField var maxColumns = 4
     @SerialEntry @JvmField var leftClickFillsInventory = true
     @SerialEntry @JvmField var leftClickAmount = 64
@@ -158,6 +159,7 @@ class SackConfig {
                                         }
                                         .build(),
                                 )
+                                .option(bool("rarityBackgrounds", defaults.rarityBackgrounds, { config.rarityBackgrounds }, { config.rarityBackgrounds = it }))
                                 .option(bool("cachePages", defaults.cachePages, { config.cachePages }, { config.cachePages = it }))
                                 .option(
                                     ButtonOption.createBuilder()

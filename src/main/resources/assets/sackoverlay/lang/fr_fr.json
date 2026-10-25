@@ -49,6 +49,8 @@
   "sackoverlay.config.itemOrder.desc": "Logique : dans chaque sack, les items sont regroupés par provenance, les paliers les plus bas d'abord, les versions compressées à côté de leur base (toutes les dents de requin ensemble, par exemple).\nHypixel : l'ordre des menus d'Hypixel, surtout alphabétique.",
   "sackoverlay.config.itemOrder.logical": "Logique",
   "sackoverlay.config.itemOrder.hypixel": "Hypixel",
+  "sackoverlay.config.rarityBackgrounds": "Fond de rareté des items",
+  "sackoverlay.config.rarityBackgrounds.desc": "Colore le fond de chaque item selon sa rareté. Avec Skyblocker installé, ce sont ses propres fonds de rareté qui sont utilisés, avec ses réglages de style, d'opacité et d'activation.",
   "sackoverlay.config.maxColumns": "Colonnes au maximum",
   "sackoverlay.config.maxColumns.desc": "Nombre maximal de pages côte à côte. Moins si l'écran est trop étroit.",
   "sackoverlay.config.glintRefresh": "Rafraîchissement des reflets d'enchantement",

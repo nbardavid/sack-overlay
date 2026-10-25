@@ -350,6 +350,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         mix(selected.hashCode())
         mix(query().hashCode())
         mix(if (dimming) 1 else 0)
+        mix(if (SackConfig.get.rarityBackgrounds) 1 else 0)
         mix(McClient.self.window.guiScale)
         for (p in placements) {
             mix(p.page.family.hashCode()); mix(p.x); mix(p.y); mix(p.h); mix(if (p.folded) 1 else 0)
@@ -415,6 +416,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
 
     /** The item of a slot with its overlays and amount. */
     private fun slotContent(graphics: GuiGraphicsExtractor, id: String, stack: ItemStack, sx: Int, sy: Int, cap: Int?) {
+        RarityBackground.draw(graphics, stack, sx + 1, sy + 1)
         graphics.item(stack, sx + 1, sy + 1)
         val amount = SackStore.count(id)
         if (amount == 0) {
