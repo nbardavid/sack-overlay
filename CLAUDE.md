@@ -25,6 +25,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 - `SackPageView`: shared panel.
   - Columns of sack pages (up to 4), vanilla 18 px slots, amounts at 3/4 scale in at most 3 characters.
   - Two display modes: HYPIXEL shows all items with zeros greyed out; COMPACT shows owned items only, without duplicates.
+  - Normal + enchanted families (`X_SACK` / `ENCHANTED_X_SACK`, both with a page) follow the `enchantedSacks` setting, being tried by the user: TABS (default, one page with an "Ench." chip after the title that flips sides, saved in `data.enchantedTabs`; a search flips to the side holding a match), PAIRED (enchanted page right after its base via `Page.anchor`, owned enchanted items only), MERGED (one page, owned enchanted items after a purple line, `Page.extra`), SEPARATE (old behavior). Each part keeps its own family capacity (`capFamily` / `extraFamily`).
   - Pages can be dragged by their title to reorder them (live preview). The order is saved in `data.pageOrder` and can be reset from the settings.
   - A click on a title (left or right) folds the page (saved in `data.folded`); a left drag moves it. Clicks never hide a page: pages are hidden from a "Hidden pages" group in the settings, one tick box per sack (`data.hidden`). Both are shared by all profiles. Hidden pages show up again while searching.
   - Withdrawing: left click sends `/gfs` with the whole stock (Hypixel only moves what fits), right click sends a stack, Shift + click opens `AmountPrompt`. Full slots get a red overlay.

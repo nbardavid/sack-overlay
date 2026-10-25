@@ -36,7 +36,24 @@ import tech.thatgravyboat.skyblockapi.utils.extentions.translated
  */
 class SackPageView(private val font: Font, private val query: () -> String) {
 
-    private data class Page(val family: String, val title: Component, val items: List<String>)
+    /**
+     * A sack page. [capFamily] is the family whose capacity applies to [items]. [extra] is the enchanted part drawn
+     * under a divider (Merged style), with [extraFamily]'s capacity. [enchantedTab] is set on a Tabs-style page: true
+     * while it shows its enchanted side. [anchor] is the family that decides the page's place in the order.
+     */
+    private data class Page(
+        val family: String,
+        val title: Component,
+        val items: List<String>,
+        val capFamily: String = family,
+        val extra: List<String> = emptyList(),
+        val extraFamily: String = capFamily,
+        val enchantedTab: Boolean? = null,
+        val anchor: String = family,
+    )
+
+    /** A page with the items left after the search filter. */
+    private data class Shown(val page: Page, val items: List<String>, val extra: List<String>)
     private data class Hit(val x0: Int, val y0: Int, val x1: Int, val y1: Int, val action: () -> Unit)
     private data class Hovered(val id: String, val stack: ItemStack, val family: String)
 
@@ -205,12 +222,62 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         val sorted = order.sortedBy { custom.indexOf(it).let { i -> if (i < 0) Int.MAX_VALUE else i } }
 
         val shown = mutableSetOf<String>()
-        val pages = sorted.mapNotNull { family ->
+        // A family's items in display order; Compact mode (or ownedOnly) keeps owned items not shown elsewhere
+        fun itemsOf(family: String, ownedOnly: Boolean = false): List<String> {
             val base = data.layouts[family] ?: families[family].orEmpty()
             val all = if (SackConfig.get.itemOrder == ItemOrder.LOGICAL) SackStore.logicalOrder(family, base) else base
-            val items = if (hypixelMode) all else all.filter { SackStore.count(it) > 0 && it !in shown }
+            val items = if (hypixelMode && !ownedOnly) all else all.filter { SackStore.count(it) > 0 && it !in shown }
             shown += items
-            if (items.isEmpty()) null else Page(family, Gui.familyTitle(family, owned.count { it == family }), items)
+            return items
+        }
+        fun title(family: String) = Gui.familyTitle(family, owned.count { it == family })
+
+        // Normal family -> its enchanted family, when both have a page and they are shown together
+        val style = SackConfig.get.enchantedSacks
+        val enchantedOf = if (style == EnchantedSacks.SEPARATE) emptyMap() else sorted
+            .filter { it.startsWith(ENCHANTED) && it.removePrefix(ENCHANTED) in sorted }
+            .associateBy { it.removePrefix(ENCHANTED) }
+
+        val pages = mutableListOf<Page>()
+        for (family in sorted) {
+            if (family in enchantedOf.values) continue
+            val ench = enchantedOf[family]
+            if (ench == null) {
+                itemsOf(family).takeIf { it.isNotEmpty() }?.let { pages += Page(family, title(family), it) }
+                continue
+            }
+            when (style) {
+                // One page that flips between both sides; a search shows the side holding a match
+                EnchantedSacks.TABS -> {
+                    val normal = itemsOf(family)
+                    val enchanted = itemsOf(ench)
+                    if (normal.isEmpty() && enchanted.isEmpty()) continue
+                    val tab = SackStore.isEnchantedTab(family)
+                    val showEnchanted = if (query().isBlank()) tab else {
+                        val inNormal = normal.any(::matches)
+                        val inEnchanted = enchanted.any(::matches)
+                        if (inNormal == inEnchanted) tab else inEnchanted
+                    }
+                    pages += if (showEnchanted) {
+                        Page(family, title(family), enchanted, capFamily = ench, enchantedTab = true)
+                    } else {
+                        Page(family, title(family), normal, enchantedTab = false)
+                    }
+                }
+                // One page: normal items, then the owned enchanted ones under a divider
+                EnchantedSacks.MERGED -> {
+                    val normal = itemsOf(family)
+                    val enchanted = itemsOf(ench, ownedOnly = true)
+                    if (normal.isNotEmpty() || enchanted.isNotEmpty()) {
+                        pages += Page(family, title(family), normal, extra = enchanted, extraFamily = ench)
+                    }
+                }
+                // Two pages kept side by side; the enchanted one only lists what is owned
+                else -> {
+                    itemsOf(family).takeIf { it.isNotEmpty() }?.let { pages += Page(family, title(family), it) }
+                    itemsOf(ench, ownedOnly = true).takeIf { it.isNotEmpty() }?.let { pages += Page(ench, title(ench), it, anchor = family) }
+                }
+            }
         }
         // Sack items that no displayed page lists
         val others = SacksAPI.sackItems.filter { (id, n) -> n > 0 && id !in shown }.keys.sorted()
@@ -218,7 +285,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         // Hidden pages stay out, except while searching so their items can still be found
         val searching = query().isNotBlank()
         return all.filter { searching || !SackStore.isHidden(it.family) }
-            .sortedBy { custom.indexOf(it.family).let { i -> if (i < 0) Int.MAX_VALUE else i } }
+            .sortedBy { custom.indexOf(it.anchor).let { i -> if (i < 0) Int.MAX_VALUE else i } }
     }
 
     private fun matches(itemId: String): Boolean {
@@ -232,12 +299,16 @@ class SackPageView(private val font: Font, private val query: () -> String) {
     private val dimming get() = SackConfig.get.searchMode == SearchMode.DIM && query().isNotBlank()
 
     private fun renderPages(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, left: Int, top: Int, right: Int, bottom: Int) {
+        val searching = query().isNotBlank()
         var pages = if (dimming) {
-            pages().map { it to it.items }
+            pages().map { Shown(it, it.items, it.extra) }
         } else {
             pages().mapNotNull { page ->
                 val items = page.items.filter(::matches)
-                if (items.isEmpty()) null else page to items
+                val extra = page.extra.filter(::matches)
+                // A Tabs page stays even with an empty side, so the player can flip back
+                val keep = items.isNotEmpty() || extra.isNotEmpty() || (page.enchantedTab != null && !searching)
+                if (keep) Shown(page, items, extra) else null
             }
         }
         if (pages.isEmpty()) {
@@ -247,7 +318,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
 
         // While dragging, the grabbed page takes the place of the page under the mouse and the others shift
         val current = drag?.takeIf { it.active }
-        val dragged = current?.let { d -> pages.firstOrNull { it.first.family == d.family } }
+        val dragged = current?.let { d -> pages.firstOrNull { it.page.family == d.family } }
         if (current != null && dragged != null) {
             pageRects.firstOrNull { mouseX in it.x until it.x + it.w && mouseY in it.y until it.y + it.h }
                 ?.let { current.target = displayed.indexOf(it.family) }
@@ -257,7 +328,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             if (mouseY < top + EDGE_SCROLL) scroll -= 4
             if (mouseY > bottom - EDGE_SCROLL) scroll += 4
         }
-        displayed = pages.map { it.first.family }
+        displayed = pages.map { it.page.family }
         headerRects.clear()
         pageRects.clear()
 
@@ -266,19 +337,27 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         var rowTop = 0
         for (row in pages.chunked(columns)) {
             var rowH = 0
-            row.forEachIndexed { col, (page, items) ->
-                val folded = SackStore.isFolded(page.family) && query().isBlank()
-                val rows = if (folded) 0 else (items.size + 8) / 9
-                val h = HEADER_H + rows * SLOT + (if (rows > 0) INNER else 0)
-                rowH = maxOf(rowH, h)
-                pageTops[page.family] = rowTop
-
+            row.forEachIndexed { col, shown ->
+                val page = shown.page
                 val x = left + col * (LOGICAL_W + GAP)
                 val y = top + rowTop - scroll
-                pageRects += PageRect(page.family, x, y, LOGICAL_W, h)
-                if (y > bottom || y + h < top) return@forEachIndexed
-                placements += Placement(page, items, rows, h, folded, x, y)
-                if (mouseY in top until bottom) headerRects += PageRect(page.family, x, y, LOGICAL_W, HEADER_H)
+                val p = placementOf(shown, x, y)
+                rowH = maxOf(rowH, p.h)
+                pageTops[page.family] = rowTop
+
+                pageRects += PageRect(page.family, x, y, LOGICAL_W, p.h)
+                if (y > bottom || y + p.h < top) return@forEachIndexed
+                placements += p
+                if (mouseY in top until bottom && y >= top) {
+                    headerRects += PageRect(page.family, x, y, LOGICAL_W, HEADER_H)
+                    // Tabs style: the "Ench." chip next to the title flips the page
+                    if (page.enchantedTab != null) {
+                        val chipX = x + chipX(page)
+                        hits += Hit(chipX, y + 1, chipX + chipWidth(), y + HEADER_H - 1) {
+                            SackStore.setEnchantedTab(page.family, !SackStore.isEnchantedTab(page.family))
+                        }
+                    }
+                }
             }
             rowTop += rowH + GAP
         }
@@ -301,7 +380,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             for (p in placements) graphics.translated(p.x, p.y) { renderPage(graphics, p, Pass.LIVE, mouseX - p.x, mouseY - p.y, inArea) }
         } else {
             for (p in placements) {
-                if (p.page == dragged?.first) {
+                if (p.page == dragged?.page) {
                     // Empty frame where the dragged page will land
                     border(graphics, p.x, p.y, LOGICAL_W, p.h, SELECTED)
                     continue
@@ -318,19 +397,32 @@ class SackPageView(private val font: Font, private val query: () -> String) {
 
         // The dragged page follows the mouse, above everything else
         if (current != null && dragged != null) {
-            val (page, items) = dragged
-            val folded = SackStore.isFolded(page.family) && query().isBlank()
-            val rows = if (folded) 0 else (items.size + 8) / 9
-            val h = HEADER_H + rows * SLOT + (if (rows > 0) INNER else 0)
-            val ghost = Placement(page, items, rows, h, folded, mouseX - current.grabX, mouseY - current.grabY)
+            val ghost = placementOf(dragged, mouseX - current.grabX, mouseY - current.grabY)
             graphics.translated(ghost.x, ghost.y) { renderPage(graphics, ghost, Pass.ALL) }
         }
     }
 
-    /** A page and where it goes on screen. */
+    /**
+     * A page and where it goes on screen. [mainRows] rows hold [items]; the rows after them hold [extra]
+     * (the enchanted part of a Merged page).
+     */
     private data class Placement(
         val page: Page, val items: List<String>, val rows: Int, val h: Int, val folded: Boolean, val x: Int, val y: Int,
+        val extra: List<String>, val mainRows: Int,
     )
+
+    private fun placementOf(shown: Shown, x: Int, y: Int): Placement {
+        val folded = SackStore.isFolded(shown.page.family) && query().isBlank()
+        val mainRows = if (folded) 0 else (shown.items.size + 8) / 9
+        val rows = if (folded) 0 else mainRows + (shown.extra.size + 8) / 9
+        val h = HEADER_H + rows * SLOT + (if (rows > 0) INNER else 0)
+        return Placement(shown.page, shown.items, rows, h, folded, x, y, shown.extra, mainRows)
+    }
+
+    /** Where the Tabs-style "Ench." chip starts, from the page's left edge: right after the title. */
+    private fun chipX(page: Page) = INNER + 1 + font.width(page.title) + 4
+
+    private fun chipWidth() = font.width(tr("enchanted_tab")) + 4
 
     /** STATIC: what goes in the cached layer. LIVE: what is drawn over it every frame. ALL: both, without a cache. */
     private enum class Pass { STATIC, LIVE, ALL }
@@ -355,8 +447,10 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         for (p in placements) {
             mix(p.page.family.hashCode()); mix(p.x); mix(p.y); mix(p.h); mix(if (p.folded) 1 else 0)
             mix(p.page.title.string.hashCode())
-            mix(SackStore.familyCapacity(p.page.family) ?: -1)
-            for (id in p.items) {
+            mix(SackStore.familyCapacity(p.page.capFamily) ?: -1)
+            mix(SackStore.familyCapacity(p.page.extraFamily) ?: -1)
+            mix(p.page.enchantedTab.hashCode())
+            for (id in p.items + p.extra) {
                 mix(id.hashCode())
                 mix(SackStore.count(id))
             }
@@ -369,12 +463,19 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         mx: Int = -1, my: Int = -1, mouseInArea: Boolean = false,
     ) {
         val (page, items, rows, h, folded) = p
-        val cap = SackStore.familyCapacity(page.family)
+        val cap = SackStore.familyCapacity(page.capFamily)
+        val extraCap = SackStore.familyCapacity(page.extraFamily)
         if (pass != Pass.LIVE) {
             card(graphics, 0, 0, LOGICAL_W, h)
             // The selected page gets a gold outline over the frame
             if (page.family == selected) border(graphics, 0, 0, LOGICAL_W, h, SELECTED)
             graphics.drawString(page.title, INNER + 1, 3, TEXT, SHADOW)
+            // Tabs style: the chip lights up purple while the enchanted side is shown
+            page.enchantedTab?.let { on ->
+                val cx = chipX(page)
+                graphics.fill(cx, 2, cx + chipWidth(), 12, if (on) ENCHANTED_FILL else SLOT_BG)
+                graphics.drawString(tr("enchanted_tab"), cx + 2, 3, if (on) ENCHANTED_TEXT else MUTED, false)
+            }
             // Right side: how much each slot can hold with the equipped sacks
             val right = if (folded) "▸" else cap?.let { "max ${Amounts.short(it)}" } ?: ""
             graphics.drawString(right, LOGICAL_W - INNER - font.width(right), 3, MUTED, SHADOW)
@@ -385,7 +486,9 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             val sx = INNER + (i % 9) * SLOT
             val sy = HEADER_H + (i / 9) * SLOT
             if (pass != Pass.LIVE) slot(graphics, sx, sy)
-            val id = items.getOrNull(i) ?: continue
+            val inExtra = i / 9 >= p.mainRows
+            val id = (if (inExtra) p.extra.getOrNull(i - p.mainRows * 9) else items.getOrNull(i)) ?: continue
+            val itemFamily = if (inExtra) page.extraFamily else page.capFamily
             val stack = SackStore.stackOf(id)
             // Enchanted items are animated: they stay out of the cached layer and are drawn live
             val animated = stack.hasFoil()
@@ -399,7 +502,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
                 Pass.STATIC -> !animated
                 Pass.LIVE -> animated
             }
-            if (drawContent) slotContent(graphics, id, stack, sx, sy, cap)
+            if (drawContent) slotContent(graphics, id, stack, sx, sy, if (inExtra) extraCap else cap)
             // Withdrawal waiting or just sent: the slot fills from the bottom until the next /gfs can go out
             if (pass != Pass.STATIC) {
                 withdrawals.fill(id)?.let { fraction ->
@@ -409,8 +512,13 @@ class SackPageView(private val font: Font, private val query: () -> String) {
             }
             if (isHovered) {
                 graphics.blitSprite(RenderPipelines.GUI_TEXTURED, HIGHLIGHT_FRONT, sx - 3, sy - 3, 24, 24)
-                hovered = Hovered(id, stack, page.family)
+                hovered = Hovered(id, stack, itemFamily)
             }
+        }
+        // Merged style: a purple line between the normal items and the enchanted ones
+        if (pass != Pass.LIVE && p.extra.isNotEmpty() && p.mainRows > 0) {
+            val ly = HEADER_H + p.mainRows * SLOT
+            graphics.fill(INNER, ly - 1, LOGICAL_W - INNER, ly + 1, ENCHANTED_LINE)
         }
     }
 
@@ -460,6 +568,12 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         // Same in every theme: amounts are white with a shadow, like vanilla stack counts
         const val COUNT = 0xFFFFFFFF.toInt()
         const val FULL_OVERLAY = 0x70FF3B30
+
+        // Enchanted side of a sack: the Tabs chip and the Merged divider
+        const val ENCHANTED = "ENCHANTED_"
+        const val ENCHANTED_FILL = 0xFF5B3A86.toInt()
+        const val ENCHANTED_TEXT = 0xFFEBD9FF.toInt()
+        const val ENCHANTED_LINE = 0xFFA06EE0.toInt()
         private val HIGHLIGHT_BACK = Identifier.withDefaultNamespace("container/slot_highlight_back")
         private val HIGHLIGHT_FRONT = Identifier.withDefaultNamespace("container/slot_highlight_front")
 

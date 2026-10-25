@@ -36,6 +36,21 @@ enum class ItemOrder {
     HYPIXEL,
 }
 
+/** How a sack and its enchanted sack (Mining / Enchanted Mining...) are shown when both have a page. */
+enum class EnchantedSacks {
+    /** One page with a chip in the title that flips it between the normal and the enchanted side. */
+    TABS,
+
+    /** Two pages always side by side; the enchanted one only lists owned items. */
+    PAIRED,
+
+    /** One page: normal items, then the owned enchanted ones under a divider. */
+    MERGED,
+
+    /** Two independent pages, as before. */
+    SEPARATE,
+}
+
 /** What the search box does to items that don't match. */
 enum class SearchMode {
     /** Hide them, and hide pages left without any match. */
@@ -51,6 +66,7 @@ class SackConfig {
     @SerialEntry @JvmField var theme = Theme.TRANSPARENT
     @SerialEntry @JvmField var displayMode = DisplayMode.HYPIXEL
     @SerialEntry @JvmField var itemOrder = ItemOrder.LOGICAL
+    @SerialEntry @JvmField var enchantedSacks = EnchantedSacks.TABS
     @SerialEntry @JvmField var rarityBackgrounds = true
     @SerialEntry @JvmField var maxColumns = 4
     @SerialEntry @JvmField var leftClickFillsInventory = true
@@ -108,6 +124,7 @@ class SackConfig {
                         .name(t("category.pages"))
                         .option(enum("displayMode", defaults.displayMode, { config.displayMode }, { config.displayMode = it }))
                         .option(enum("itemOrder", defaults.itemOrder, { config.itemOrder }, { config.itemOrder = it }))
+                        .option(enum("enchantedSacks", defaults.enchantedSacks, { config.enchantedSacks }, { config.enchantedSacks = it }))
                         .option(
                             ButtonOption.createBuilder()
                                 .name(t("resetPageOrder"))

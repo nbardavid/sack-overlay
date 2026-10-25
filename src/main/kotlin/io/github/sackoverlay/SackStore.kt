@@ -56,6 +56,8 @@ object SackStore {
         var pageOrder: MutableList<String> = mutableListOf(),
         /** Pages folded with a right click on their title. */
         var folded: MutableSet<String> = mutableSetOf(),
+        /** Tabs style: families whose page shows its enchanted side. */
+        var enchantedTabs: MutableSet<String> = mutableSetOf(),
         /** Pages hidden from the settings. */
         var hidden: MutableSet<String> = mutableSetOf(),
         // Saved before data was split per profile; moved into the first profile seen
@@ -75,6 +77,13 @@ object SackStore {
 
     fun setFolded(family: String, folded: Boolean) {
         val changed = if (folded) data.folded.add(family) else data.folded.remove(family)
+        if (changed) save()
+    }
+
+    fun isEnchantedTab(family: String) = family in data.enchantedTabs
+
+    fun setEnchantedTab(family: String, enchanted: Boolean) {
+        val changed = if (enchanted) data.enchantedTabs.add(family) else data.enchantedTabs.remove(family)
         if (changed) save()
     }
 
