@@ -60,6 +60,7 @@ Started in a Claude Desktop session; the full conversation export is `../convers
 
 ## Releases
 - Repo: https://github.com/nbardavid/sack-overlay (development happens on this PC).
+- Versions: small features and fixes bump the last number only (0.3.0 → 0.3.1); the middle number is for a real batch of features, when the user asks.
 - Bump `mod_version` in `gradle.properties`, commit and push, then `gh release create v<version> --generate-notes`: `.github/workflows/publish.yml` builds the jar, attaches it to the release and uploads it to Modrinth (secret `MODRINTH_TOKEN`, variable `MODRINTH_ID` = `YZojHzPT`).
 
 - Modrinth project: https://modrinth.com/mod/sack-overlay-hypixel-skyblock (owner "lourio"), submitted for review on 2026-10-23. `modrinth.md` holds the page description.
