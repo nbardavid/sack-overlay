@@ -225,7 +225,6 @@ object SackStore {
     /** Amount to display: SacksAPI's value, adjusted by withdrawals and deposits the player just made. */
     fun count(itemId: String): Int {
         val base = SacksAPI.sackItems[itemId] ?: 0
-        if (!SackConfig.get.instantUpdates) return base
         val (delta, at) = pending[itemId] ?: return base
         if (System.currentTimeMillis() - at > PENDING_TTL_MS) {
             pending.remove(itemId)

@@ -40,7 +40,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
     private data class Hit(val x0: Int, val y0: Int, val x1: Int, val y1: Int, val action: () -> Unit)
     private data class Hovered(val id: String, val stack: ItemStack, val family: String)
 
-    private var scroll = if (SackConfig.get.rememberScroll) savedScroll else 0
+    private var scroll = savedScroll
     private var maxScroll = 0
     private var selected: String? = null
     private val hits = mutableListOf<Hit>()

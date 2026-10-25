@@ -37,14 +37,14 @@ Started in a Claude Desktop session; the full conversation export is `../convers
   - It keeps the real `ChestMenu` and only moves the real slots: the player inventory stays centered at the bottom, and the Sack of Sacks slots go into a panel on its left.
   - It reports the real bounds through `leftPos`/`topPos` and `AbstractContainerScreenAccessor` (imageWidth/imageHeight are final in 26.2), so Skyblocker's Quick Nav tabs and RRV place themselves around it. It leaves top and bottom margins when those mods are loaded.
 - `SackOverlayScreen`: standalone, read-only view (`/sackoverlay`).
-- `SackConfig` (YACL, like Skyblocker) + `SackModMenu`: settings via the ⚙ button, Mod Menu, or `/sackoverlay config`.
+- `SackConfig` (YACL, like Skyblocker) + `SackModMenu`: settings via the ⚙ button, Mod Menu, or `/sackoverlay config`. Four tabs: General, Pages (display mode, item order, search, page order, hidden pages), Withdrawing, Performance. Keep settings few: "instant updates" and "remember scroll" were removed and are always on.
 - Only the Sack of Sacks is replaced: the user wants each sack's own menu to stay vanilla. A version that replaced them with live slots inside the page was tried and removed. A click on a page title only folds the page. Never click a real Sack of Sacks slot from the panel: on Hypixel that takes the sack out of the Sack of Sacks (an earlier "open the sack from its title" feature did exactly that and was removed).
 - `/gfs` is slower than menu clicks: Hypixel handles commands with more latency. This cannot be fixed client-side; one left click (whole stock) avoids spamming. At most one `/gfs` goes out per `withdrawDelayMs` (500 ms by default). Clicks in between add up in `queuedWithdraw` and are flushed as one command; the slot shows a bottom-up white fill (`waitFill`) meanwhile. A queue still pending when the screen closes is dropped on purpose.
 - `Theme` (Transparent default / Light / Dark). Frames are drawn in code in the vanilla menu style that Enhanced Storage uses: a black outline with cut corners, a raised edge and bevelled slots. No Enhanced Storage assets are copied (they are GPL).
 - `ToolButtons`: one framed settings button with our own gear sprite (`textures/gui/sprites/gear.png`), placed right of the inventory and level with its top. The theme is chosen in the settings only. `/gfs` cooldown: 100 ms.
 - `SearchInput` + `SackKeys` (features taken from Enhanced Storage's ideas):
   - search modes Filter / Dim;
-  - optional remembered search and scroll position;
+  - optional remembered search; the scroll position is always kept;
   - `/sackoverlay search <text>` sends /sacks with the search pre-filled;
   - unbound key "open /sacks";
   - arrow keys move the highlight between pages.

@@ -57,12 +57,10 @@ class SackConfig {
     @SerialEntry @JvmField var leftClickAmount = 64
     @SerialEntry @JvmField var rightClickStack = 64
     @SerialEntry @JvmField var withdrawDelayMs = 500
-    @SerialEntry @JvmField var instantUpdates = true
     @SerialEntry @JvmField var glintRefresh = GlintRefresh.FPS_30
     @SerialEntry @JvmField var cachePages = true
     @SerialEntry @JvmField var searchMode = SearchMode.FILTER
     @SerialEntry @JvmField var rememberSearch = false
-    @SerialEntry @JvmField var rememberScroll = true
 
     companion object {
         private val HANDLER: ConfigClassHandler<SackConfig> = ConfigClassHandler.createBuilder(SackConfig::class.java)
@@ -92,149 +90,63 @@ class SackConfig {
                 .category(
                     ConfigCategory.createBuilder()
                         .name(t("category.general"))
-                        .group(
-                            OptionGroup.createBuilder()
-                                .name(t("group.display"))
-                                .option(
-                                    Option.createBuilder<Boolean>()
-                                        .name(t("replaceSackScreen"))
-                                        .description(OptionDescription.of(t("replaceSackScreen.desc")))
-                                        .binding(defaults.replaceSackScreen, { config.replaceSackScreen }, { config.replaceSackScreen = it })
-                                        .controller(TickBoxControllerBuilder::create)
-                                        .build(),
-                                )
-                                .option(
-                                    Option.createBuilder<Theme>()
-                                        .name(t("theme"))
-                                        .description(OptionDescription.of(t("theme.desc")))
-                                        .binding(defaults.theme, { config.theme }, { config.theme = it })
-                                        .controller { option ->
-                                            EnumControllerBuilder.create(option)
-                                                .enumClass(Theme::class.java)
-                                                .formatValue { t("theme.${it.name.lowercase()}") }
-                                        }
-                                        .build(),
-                                )
-                                .option(
-                                    Option.createBuilder<DisplayMode>()
-                                        .name(t("displayMode"))
-                                        .description(OptionDescription.of(t("displayMode.desc")))
-                                        .binding(defaults.displayMode, { config.displayMode }, { config.displayMode = it })
-                                        .controller { option ->
-                                            EnumControllerBuilder.create(option)
-                                                .enumClass(DisplayMode::class.java)
-                                                .formatValue { t("displayMode.${it.name.lowercase()}") }
-                                        }
-                                        .build(),
-                                )
-                                .option(
-                                    Option.createBuilder<ItemOrder>()
-                                        .name(t("itemOrder"))
-                                        .description(OptionDescription.of(t("itemOrder.desc")))
-                                        .binding(defaults.itemOrder, { config.itemOrder }, { config.itemOrder = it })
-                                        .controller { option ->
-                                            EnumControllerBuilder.create(option)
-                                                .enumClass(ItemOrder::class.java)
-                                                .formatValue { t("itemOrder.${it.name.lowercase()}") }
-                                        }
-                                        .build(),
-                                )
-                                .option(
-                                    Option.createBuilder<Int>()
-                                        .name(t("maxColumns"))
-                                        .description(OptionDescription.of(t("maxColumns.desc")))
-                                        .binding(defaults.maxColumns, { config.maxColumns }, { config.maxColumns = it })
-                                        .controller { option -> IntegerSliderControllerBuilder.create(option).range(1, 4).step(1) }
-                                        .build(),
-                                )
-                                .option(
-                                    Option.createBuilder<GlintRefresh>()
-                                        .name(t("glintRefresh"))
-                                        .description(OptionDescription.of(t("glintRefresh.desc")))
-                                        .binding(defaults.glintRefresh, { config.glintRefresh }, { config.glintRefresh = it })
-                                        .controller { option ->
-                                            EnumControllerBuilder.create(option)
-                                                .enumClass(GlintRefresh::class.java)
-                                                .formatValue { t("glintRefresh.${it.name.lowercase()}") }
-                                        }
-                                        .build(),
-                                )
-                                .option(bool("rarityBackgrounds", defaults.rarityBackgrounds, { config.rarityBackgrounds }, { config.rarityBackgrounds = it }))
-                                .option(bool("cachePages", defaults.cachePages, { config.cachePages }, { config.cachePages = it }))
-                                .option(
-                                    ButtonOption.createBuilder()
-                                        .name(t("resetPageOrder"))
-                                        .description(OptionDescription.of(t("resetPageOrder.desc")))
-                                        .action { _, _ -> SackStore.resetPageOrder() }
-                                        .build(),
-                                )
-                                .option(
-                                    Option.createBuilder<Boolean>()
-                                        .name(t("instantUpdates"))
-                                        .description(OptionDescription.of(t("instantUpdates.desc")))
-                                        .binding(defaults.instantUpdates, { config.instantUpdates }, { config.instantUpdates = it })
-                                        .controller(TickBoxControllerBuilder::create)
-                                        .build(),
-                                )
+                        .option(bool("replaceSackScreen", defaults.replaceSackScreen, { config.replaceSackScreen }, { config.replaceSackScreen = it }))
+                        .option(enum("theme", defaults.theme, { config.theme }, { config.theme = it }))
+                        .option(bool("rarityBackgrounds", defaults.rarityBackgrounds, { config.rarityBackgrounds }, { config.rarityBackgrounds = it }))
+                        .option(
+                            Option.createBuilder<Int>()
+                                .name(t("maxColumns"))
+                                .description(OptionDescription.of(t("maxColumns.desc")))
+                                .binding(defaults.maxColumns, { config.maxColumns }, { config.maxColumns = it })
+                                .controller { option -> IntegerSliderControllerBuilder.create(option).range(1, 4).step(1) }
                                 .build(),
                         )
-                        .group(hiddenPages())
+                        .build(),
+                )
+                .category(
+                    ConfigCategory.createBuilder()
+                        .name(t("category.pages"))
+                        .option(enum("displayMode", defaults.displayMode, { config.displayMode }, { config.displayMode = it }))
+                        .option(enum("itemOrder", defaults.itemOrder, { config.itemOrder }, { config.itemOrder = it }))
+                        .option(
+                            ButtonOption.createBuilder()
+                                .name(t("resetPageOrder"))
+                                .description(OptionDescription.of(t("resetPageOrder.desc")))
+                                .action { _, _ -> SackStore.resetPageOrder() }
+                                .build(),
+                        )
                         .group(
                             OptionGroup.createBuilder()
                                 .name(t("group.search"))
-                                .option(
-                                    Option.createBuilder<SearchMode>()
-                                        .name(t("searchMode"))
-                                        .description(OptionDescription.of(t("searchMode.desc")))
-                                        .binding(defaults.searchMode, { config.searchMode }, { config.searchMode = it })
-                                        .controller { option ->
-                                            EnumControllerBuilder.create(option)
-                                                .enumClass(SearchMode::class.java)
-                                                .formatValue { t("searchMode.${it.name.lowercase()}") }
-                                        }
-                                        .build(),
-                                )
+                                .option(enum("searchMode", defaults.searchMode, { config.searchMode }, { config.searchMode = it }))
                                 .option(bool("rememberSearch", defaults.rememberSearch, { config.rememberSearch }, { config.rememberSearch = it }))
-                                .option(bool("rememberScroll", defaults.rememberScroll, { config.rememberScroll }, { config.rememberScroll = it }))
                                 .build(),
                         )
-                        .group(
-                            OptionGroup.createBuilder()
-                                .name(t("group.withdraw"))
-                                .description(OptionDescription.of(t("group.withdraw.desc")))
-                                .option(
-                                    Option.createBuilder<Boolean>()
-                                        .name(t("leftClickFillsInventory"))
-                                        .description(OptionDescription.of(t("leftClickFillsInventory.desc")))
-                                        .binding(defaults.leftClickFillsInventory, { config.leftClickFillsInventory }, { config.leftClickFillsInventory = it })
-                                        .controller(TickBoxControllerBuilder::create)
-                                        .build(),
-                                )
-                                .option(
-                                    Option.createBuilder<Int>()
-                                        .name(t("leftClickAmount"))
-                                        .description(OptionDescription.of(t("leftClickAmount.desc")))
-                                        .binding(defaults.leftClickAmount, { config.leftClickAmount }, { config.leftClickAmount = it })
-                                        .controller { option -> IntegerFieldControllerBuilder.create(option).range(1, 2240) }
-                                        .build(),
-                                )
-                                .option(
-                                    Option.createBuilder<Int>()
-                                        .name(t("withdrawDelayMs"))
-                                        .description(OptionDescription.of(t("withdrawDelayMs.desc")))
-                                        .binding(defaults.withdrawDelayMs, { config.withdrawDelayMs }, { config.withdrawDelayMs = it })
-                                        .controller { option -> IntegerSliderControllerBuilder.create(option).range(100, 1000).step(50) }
-                                        .build(),
-                                )
-                                .option(
-                                    Option.createBuilder<Int>()
-                                        .name(t("rightClickStack"))
-                                        .binding(defaults.rightClickStack, { config.rightClickStack }, { config.rightClickStack = it })
-                                        .controller { option -> IntegerFieldControllerBuilder.create(option).range(1, 2240) }
-                                        .build(),
-                                )
+                        .group(hiddenPages())
+                        .build(),
+                )
+                .category(
+                    ConfigCategory.createBuilder()
+                        .name(t("category.withdraw"))
+                        .tooltip(t("category.withdraw.desc"))
+                        .option(bool("leftClickFillsInventory", defaults.leftClickFillsInventory, { config.leftClickFillsInventory }, { config.leftClickFillsInventory = it }))
+                        .option(amount("leftClickAmount", defaults.leftClickAmount, { config.leftClickAmount }, { config.leftClickAmount = it }))
+                        .option(amount("rightClickStack", defaults.rightClickStack, { config.rightClickStack }, { config.rightClickStack = it }))
+                        .option(
+                            Option.createBuilder<Int>()
+                                .name(t("withdrawDelayMs"))
+                                .description(OptionDescription.of(t("withdrawDelayMs.desc")))
+                                .binding(defaults.withdrawDelayMs, { config.withdrawDelayMs }, { config.withdrawDelayMs = it })
+                                .controller { option -> IntegerSliderControllerBuilder.create(option).range(100, 1000).step(50) }
                                 .build(),
                         )
+                        .build(),
+                )
+                .category(
+                    ConfigCategory.createBuilder()
+                        .name(t("category.performance"))
+                        .option(enum("glintRefresh", defaults.glintRefresh, { config.glintRefresh }, { config.glintRefresh = it }))
+                        .option(bool("cachePages", defaults.cachePages, { config.cachePages }, { config.cachePages = it }))
                         .build(),
                 )
                 .save(::save)
@@ -263,6 +175,28 @@ class SackConfig {
             }
             return group.build()
         }
+
+        /** A choice between enum values; names come from the lang file as "<key>.<value in lowercase>". */
+        private inline fun <reified E : Enum<E>> enum(key: String, default: E, noinline get: () -> E, noinline set: (E) -> Unit): Option<E> =
+            Option.createBuilder<E>()
+                .name(t(key))
+                .description(OptionDescription.of(t("$key.desc")))
+                .binding(default, get, set)
+                .controller { option ->
+                    EnumControllerBuilder.create(option)
+                        .enumClass(E::class.java)
+                        .formatValue { t("$key.${it.name.lowercase()}") }
+                }
+                .build()
+
+        /** An item amount typed in a field, up to one small sack's capacity. */
+        private fun amount(key: String, default: Int, get: () -> Int, set: (Int) -> Unit): Option<Int> =
+            Option.createBuilder<Int>()
+                .name(t(key))
+                .description(OptionDescription.of(t("$key.desc")))
+                .binding(default, get, set)
+                .controller { option -> IntegerFieldControllerBuilder.create(option).range(1, 2240) }
+                .build()
 
         /** A tick box option with a name and a description, both taken from the lang file. */
         private fun bool(key: String, default: Boolean, get: () -> Boolean, set: (Boolean) -> Unit): Option<Boolean> =
