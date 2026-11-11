@@ -852,5 +852,45 @@
       "OBFUSCATED_FISH_3_GOLD",
       "OBFUSCATED_FISH_3_DIAMOND"
     ]
+  },
+  {
+    "sack": "VINYL_SACK",
+    "items": [
+      "VINYL_BUZZIN_BEATS",
+      "VINYL_CICADA_SYMPHONY",
+      "VINYL_CRICKET_CHOIR",
+      "VINYL_DYNAMITES",
+      "VINYL_EARTHWORM_ENSEMBLE",
+      "VINYL_FIREFLY",
+      "VINYL_IMAGINE_DRAGONFLIES",
+      "VINYL_BEETLE",
+      "VINYL_PRAY_FOR_ME",
+      "VINYL_PRETTY_FLY",
+      "VINYL_RODENT_REVOLUTION",
+      "VINYL_SLOW_AND_GROOVY",
+      "VINYL_WINGS_OF_HARMONY"
+    ]
+  },
+  {
+    "sack": "LARGE_WINTER_SACK",
+    "items": [
+      "WHITE_GIFT",
+      "GREEN_GIFT",
+      "RED_GIFT",
+      "PARTY_GIFT",
+      "SNOW_BALL",
+      "SNOW_BLOCK",
+      "ENCHANTED_SNOW_BLOCK",
+      "ICE",
+      "PACKED_ICE",
+      "ENCHANTED_ICE",
+      "ENCHANTED_PACKED_ICE",
+      "ICE_HUNK",
+      "BLUE_ICE_HUNK",
+      "GLACIAL_FRAGMENT",
+      "WALNUT",
+      "WINTER_FRAGMENT",
+      "VOLCANIC_ROCK"
+    ]
   }
 ]

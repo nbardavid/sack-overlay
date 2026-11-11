@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component
 import tech.thatgravyboat.skyblockapi.platform.drawString
 
 /**
- * "Choose an amount" window opened by a shift-click on a page item, in the spirit of SkyOcean's:
+ * "Choose an amount" window opened by a click on a page item with the "choose amount" key held (Left Ctrl by default), in the spirit of SkyOcean's:
  * +1/+10/+100/+1000 and -1/-10/-100/-1000 buttons, a number field and an OK button.
  * Entirely drawn and handled here, on top of everything: while it is open it takes every key and click.
  */

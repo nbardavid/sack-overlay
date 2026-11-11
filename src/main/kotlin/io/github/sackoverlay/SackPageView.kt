@@ -108,11 +108,11 @@ class SackPageView(private val font: Font, private val query: () -> String) {
     /** Set while a popup is open: no hover, no tooltip, no clicks on the pages. */
     var frozen = false
 
-    /** Item the player shift-clicked and wants to type an amount for, with the click position. */
+    /** Item the player clicked with the "choose amount" key and wants to type an amount for, with the click position. */
     var amountPrompt: Triple<String, Int, Int>? = null
 
     /** button: 0 = left click, 1 = right click. */
-    fun click(mx: Int, my: Int, button: Int, shift: Boolean): Boolean {
+    fun click(mx: Int, my: Int, button: Int, chooseAmount: Boolean): Boolean {
         hits.lastOrNull { mx in it.x0 until it.x1 && my in it.y0 until it.y1 }?.let {
             it.action()
             return true
@@ -129,7 +129,7 @@ class SackPageView(private val font: Font, private val query: () -> String) {
         val id = hovered?.id ?: return false
         val owned = SackStore.count(id)
         if (owned <= 0) return true
-        if (shift) {
+        if (chooseAmount) {
             amountPrompt = Triple(id, mx, my)
             return true
         }

@@ -20,12 +20,24 @@ object SackKeys {
     lateinit var toggleEnchanted: KeyMapping
         private set
 
+    /** Held while clicking a page item: opens the amount window instead of withdrawing (Left Ctrl by default). */
+    lateinit var chooseAmount: KeyMapping
+        private set
+
     const val KEY_ESCAPE = 256
     const val KEY_RIGHT = 262
     const val KEY_LEFT = 263
     const val KEY_DOWN = 264
     const val KEY_UP = 265
+    private const val KEY_LEFT_CONTROL = 341
     private const val KEY_LEFT_ALT = 342
+
+    /** Whether the "choose amount" key is held. Key mappings are not updated while a screen is open, so the key is read directly. */
+    fun chooseAmountHeld(): Boolean {
+        val key = KeyMappingHelper.getBoundKeyOf(chooseAmount)
+        return key.type == InputConstants.Type.KEYSYM && key != InputConstants.UNKNOWN &&
+            InputConstants.isKeyDown(McClient.self.window, key.value)
+    }
 
     fun register() {
         openSacks = KeyMappingHelper.registerKeyMapping(
@@ -33,6 +45,9 @@ object SackKeys {
         )
         toggleEnchanted = KeyMappingHelper.registerKeyMapping(
             KeyMapping("key.sackoverlay.toggle_enchanted", InputConstants.Type.KEYSYM, KEY_LEFT_ALT, CATEGORY),
+        )
+        chooseAmount = KeyMappingHelper.registerKeyMapping(
+            KeyMapping("key.sackoverlay.choose_amount", InputConstants.Type.KEYSYM, KEY_LEFT_CONTROL, CATEGORY),
         )
 
         // Key presses only count while no screen is open, so this never fires while typing in chat or a menu

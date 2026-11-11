@@ -36,9 +36,11 @@ object SackTooltip {
             val familyName = Component.literal(Gui.familyTitle(family, 1).string + " Sack").withStyle(ChatFormatting.DARK_GRAY)
             lines.addAll(1, listOf(familyName, Component.empty(), stored, Component.empty()) + clickHints())
         }
-        if (owned > 0) {
+        // Only shown while the "choose amount" key is bound
+        if (owned > 0 && !SackKeys.chooseAmount.isUnbound) {
             val pickup = lines.indexOfFirst { it.string.contains("Click to pickup") }
-            lines.add(if (pickup >= 0) pickup + 1 else lines.size, tr("hint.shift").withStyle(ChatFormatting.YELLOW))
+            val hint = Component.translatable("sackoverlay.ui.hint.amount_key", SackKeys.chooseAmount.translatedKeyMessage)
+            lines.add(if (pickup >= 0) pickup + 1 else lines.size, hint.withStyle(ChatFormatting.YELLOW))
         }
 
         val (mx, my) = McClient.mouse

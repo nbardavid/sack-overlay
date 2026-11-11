@@ -177,6 +177,26 @@ object SackStore {
         runCatching {
             if (file.exists()) data = gson.fromJson(file.readText(), Data::class.java) ?: Data()
         }.onFailure { logger.error("Could not read data.json", it) }
+        fixFamilyKeys()
+    }
+
+    /**
+     * Menus read before 0.3.3 saved "Witch's Sack" as its own family (WITCH'S_SACK), next to WITCH_SACK.
+     * Such keys are moved to the family the menu title now gives.
+     */
+    private fun fixFamilyKeys() {
+        val bad = data.layouts.keys.filter { it.any { c -> !c.isLetterOrDigit() && c != '_' } }
+        if (bad.isEmpty()) return
+        for (old in bad) {
+            val family = familyOfTitle(old.replace('_', ' '))
+            data.layouts.remove(old)?.let { data.layouts.putIfAbsent(family, it) }
+            data.profiles.values.forEach { p -> p.familyCapacity.remove(old)?.let { p.familyCapacity.putIfAbsent(family, it) } }
+            data.pageOrder.replaceAll { if (it == old) family else it }
+            if (data.folded.remove(old)) data.folded += family
+            if (data.hidden.remove(old)) data.hidden += family
+        }
+        data.pageOrder = data.pageOrder.distinct().toMutableList()
+        save()
     }
 
     private fun save() {
@@ -197,9 +217,9 @@ object SackStore {
         families.keys.filter { sackId == it || sackId.endsWith("_$it") }.maxByOrNull { it.length }
             ?: sizePrefix.replace(sackId, "")
 
-    /** "Mining Sack" -> MINING_SACK, "Gemstones Sack" -> GEMSTONE_SACK. */
+    /** "Mining Sack" -> MINING_SACK, "Gemstones Sack" -> GEMSTONE_SACK, "Witch's Sack" -> WITCH_SACK. */
     private fun familyOfTitle(title: String): String {
-        val key = title.uppercase().replace(' ', '_')
+        val key = title.uppercase().replace(Regex("[^A-Z0-9 ]"), "").trim().replace(' ', '_')
         val singular = key.split('_').joinToString("_") { it.removeSuffix("S").ifEmpty { it } }
         return listOf(key, singular, familyOf(key), familyOf(singular)).firstOrNull { it in families } ?: familyOf(key)
     }

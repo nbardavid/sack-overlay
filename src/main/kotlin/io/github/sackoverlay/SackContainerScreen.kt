@@ -28,6 +28,8 @@ import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.inventory.ChestMenu
 import net.minecraft.world.inventory.ContainerInput
 import net.minecraft.world.inventory.Slot
+import tech.thatgravyboat.skyblockapi.api.datatype.DataTypes
+import tech.thatgravyboat.skyblockapi.api.datatype.getData
 import tech.thatgravyboat.skyblockapi.helpers.McClient
 import tech.thatgravyboat.skyblockapi.helpers.McPlayer
 import tech.thatgravyboat.skyblockapi.platform.drawString
@@ -191,6 +193,15 @@ class SackContainerScreen(menu: ChestMenu, inventory: Inventory, title: Componen
             // Updates the display right away; the [Sacks] message confirms it later
             SackStore.onInsertRequested(menu.slots.takeLast(36).map { it.item })
         }
+        // On a sack, Hypixel opens it on right click and takes it out on left click. Swapped so a left click opens
+        // the sack's own (vanilla) menu: still one click from the player, one click sent, only the button differs.
+        // Not when holding something, so putting a sack into a free slot stays vanilla.
+        if (slot in placed && containerInput == ContainerInput.PICKUP && buttonNum in 0..1 && menu.carried.isEmpty &&
+            slot.item.getData(DataTypes.ID)?.endsWith("SACK") == true
+        ) {
+            super.slotClicked(slot, slotId, 1 - buttonNum, containerInput)
+            return
+        }
         super.slotClicked(slot, slotId, buttonNum, containerInput)
     }
 
@@ -199,7 +210,7 @@ class SackContainerScreen(menu: ChestMenu, inventory: Inventory, title: Componen
         val my = event.y.toInt()
         if (prompt.mouseClicked(mx, my)) return true
         if (tools.click(mx, my)) return true
-        if (view.click(mx, my, event.button(), event.hasShiftDown())) return true
+        if (view.click(mx, my, event.button(), SackKeys.chooseAmountHeld())) return true
         return super.mouseClicked(event, doubleClick)
     }
 

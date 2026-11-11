@@ -100,7 +100,7 @@ class SackOverlayScreen : Screen(Component.translatable("sackoverlay.ui.title"))
             view.select(family)
             return true
         }
-        if (view.click(mx, my, event.button(), event.hasShiftDown())) return true
+        if (view.click(mx, my, event.button(), SackKeys.chooseAmountHeld())) return true
         return super.mouseClicked(event, doubleClick)
     }
 

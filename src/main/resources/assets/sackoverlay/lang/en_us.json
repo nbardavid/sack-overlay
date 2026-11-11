@@ -14,7 +14,7 @@
   "sackoverlay.ui.hint.right_amount": "Right-Click for %s!",
   "sackoverlay.ui.hint.left_pickup": "Click to pickup!",
   "sackoverlay.ui.hint.left_amount": "Click to take %s!",
-  "sackoverlay.ui.hint.shift": "Shift-Click to choose amount!",
+  "sackoverlay.ui.hint.amount_key": "%s + Click to choose amount!",
   "sackoverlay.ui.amount": "Amount",
   "sackoverlay.ui.enchanted": "Enchanted",
   "sackoverlay.ui.enchanted.tooltip": "Shows the enchanted sacks instead of the normal ones.\nKey: %s (change it in Controls)",
@@ -22,6 +22,7 @@
   "key.category.sackoverlay.main": "Sack Overlay",
   "key.sackoverlay.open_sacks": "Open sacks (/sacks)",
   "key.sackoverlay.toggle_enchanted": "Switch to enchanted sacks",
+  "key.sackoverlay.choose_amount": "Choose amount (hold + click)",
 
   "sackoverlay.config.title": "Sack Overlay",
   "sackoverlay.config.group.search": "Search",
